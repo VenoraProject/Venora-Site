@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Developers · Venora</title>
+	<meta name="description" content="Write a Venora plugin: plugin.json, one ES module, and the Plugin API v1. The venora object, permissions, settings, storage, events, lifecycle, restrictions and limits.">
+	<meta property="og:title" content="Build Venora plugins">
+	<!-- @include head -->
+</head>
+<body data-page="developers">
+<!-- @include sidebar -->
+<div class="page">
+<main id="main">
+
+	<header class="page-hero">
+		<div class="wrap">
+			<p class="eyebrow" data-reveal>Developers · Plugin API v{{ apiVersion }}</p>
+			<h1 data-reveal style="--d:1">Build a plugin in <em>two files.</em></h1>
+			<p class="lede" data-reveal style="--d:2">A Venora plugin is a <code>plugin.json</code> manifest and one ES module. This page is the guided tour. The <a class="inline" href="{{ doc:plugin-api.md }}" rel="noopener">API v{{ apiVersion }} specification</a> in the repository is the contract, and you can write a plugin from it without reading Venora's source.</p>
+			<div class="actions" data-reveal style="--d:3; margin-top:32px">
+				<a class="btn btn--primary" href="#quick-start">Quick start <i data-icon="arrow-right" class="icon--move"></i></a>
+				<a class="btn btn--ghost" href="{{ docsUrl }}" rel="noopener"><i data-icon="book-open"></i> Full documentation</a>
+			</div>
+		</div>
+	</header>
+
+	<section class="section section--tight" aria-label="Developer guide">
+		<div class="wrap with-toc">
+			<div>
+				<section class="doc-section" id="quick-start" aria-labelledby="h-quick">
+					<p class="eyebrow"><b>01</b> Quick start</p>
+					<h2 id="h-quick">Structure</h2>
+					<div class="prose">
+						<p>Put the files in a folder and ZIP it. <code>plugin.json</code> can be at the root of the ZIP or inside one top-level folder. Install it from <strong>Settings → Plugins → Add plugin</strong>.</p>
+					</div>
+					<div class="tree frame" aria-label="Plugin folder structure">
+						<div><i data-icon="folder-tree"></i><span>greeter/</span></div>
+						<div class="tree__item"><i data-icon="file-json"></i><span>plugin.json</span><em>manifest: identity, permissions, settings</em></div>
+						<div class="tree__item"><i data-icon="file-code"></i><span>index.js</span><em>entry script: one ES module</em></div>
+						<div class="tree__item tree__item--opt"><i data-icon="palette"></i><span>style.css</span><em>optional, needs <code>ui</code></em></div>
+					</div>
+
+					<h3>plugin.json</h3>
+					<div class="code">
+						<div class="code__bar"><i data-icon="file-json"></i>greeter/plugin.json</div>
+<pre tabindex="0"><code class="language-json">{
+  "id": "greeter",
+  "name": "Greeter",
+  "version": "1.0.0",
+  "author": "Your name",
+  "description": "Says hello when Fermo opens.",
+  "main": "index.js",
+  "permissions": ["storage", "ui"],
+  "compatibility": {"apiVersion": 1, "minVenoraVersion": "0.1.0"},
+  "settings": [
+    {"key": "greeting", "name": "Greeting", "type": "string", "default": "Hello!"}
+  ],
+  "changelog": [
+    {"version": "1.0.0", "added": ["Says hello."]}
+  ]
+}</code></pre>
+					</div>
+					<div class="prose" style="margin-top:20px">
+						<p><code>id</code>, <code>name</code> and <code>version</code> are required. The <code>id</code> is permanent: updates, settings and storage are keyed by it. <code>version</code> follows semantic versioning, and an update must be higher. Put <code>apiVersion</code> inside <code>compatibility</code>. A top-level one is rejected, so it can't be silently ignored.</p>
+					</div>
+
+					<h3>index.js</h3>
+					<div class="code">
+						<div class="code__bar"><i data-icon="file-code"></i>greeter/index.js</div>
+<pre tabindex="0"><code class="language-js">export default async (venora) => {
+  const greeting = await venora.settings.get({key: "greeting"});
+  await venora.ui.toast({message: greeting});
+
+  const unsubscribe = await venora.on("settings.changed", ({key, value}) => {
+    if (key === "greeting") venora.ui.toast({message: value});
+  });
+
+  return () => {
+    // Cleanup: clear your own timers. Venora removes anything it added to
+    // the page for this plugin, and ends its subscriptions, automatically.
+    unsubscribe();
+  };
+};</code></pre>
+					</div>
+					<div class="doc-links">
+						<a class="link-arrow" href="{{ doc:plugin-manifest.md }}" rel="noopener">Every manifest field <i data-icon="arrow-up-right"></i></a>
+						<a class="link-arrow" href="{{ tree:examples/hello-runtime }}" rel="noopener">Example: hello-runtime <i data-icon="arrow-up-right"></i></a>
+					</div>
+				</section>
+
+				<section class="doc-section" id="venora-object" aria-labelledby="h-object">
+					<p class="eyebrow"><b>02</b> The API</p>
+					<h2 id="h-object">The <code>venora</code> object</h2>
+					<div class="prose">
+						<p>Your default export is called with one argument, <code>venora</code>. It is created fresh each time the plugin starts, frozen, and not shared with any other plugin.</p>
+						<ul>
+							<li><strong>One argument.</strong> Every method takes at most one plain object. Unknown fields are ignored, including any <code>pluginId</code>.</li>
+							<li><strong>Always a promise.</strong> Every call crosses the bridge, so every method returns a promise that resolves to a copy of plain data.</li>
+							<li><strong>One method, one capability.</strong> <code>venora.ui.toast(p)</code> is exactly <code>venora.request("ui.toast", p)</code>, with the same checks.</li>
+						</ul>
+					</div>
+					<div class="table-wrap">
+						<table>
+							<thead><tr><th scope="col">Method</th><th scope="col">Permissions</th><th scope="col">Input → result</th><th scope="col">Own rate limit</th></tr></thead>
+							<tbody>
+								<tr><td><code>venora.ui.toast</code></td><td><code>ui</code></td><td><code>{message, durationMs?}</code> → <code>null</code>. Plain text, up to 200 characters, shown for 1–10 s.</td><td>5, then 1 / 2 s</td></tr>
+								<tr><td><code>venora.settings.get</code></td><td><code>storage</code></td><td><code>{key}</code> → the saved value, else the declared default, else <code>null</code></td><td>none</td></tr>
+								<tr><td><code>venora.storage.get</code></td><td><code>storage</code></td><td><code>{key}</code> → the stored value or <code>null</code></td><td>none</td></tr>
+								<tr><td><code>venora.storage.set</code></td><td><code>storage</code></td><td><code>{key, value}</code> → <code>null</code></td><td>60, then 20/s</td></tr>
+								<tr><td><code>venora.storage.remove</code></td><td><code>storage</code></td><td><code>{key}</code> → <code>null</code></td><td>60, then 20/s</td></tr>
+								<tr><td><code>venora.storage.clear</code></td><td><code>storage</code></td><td>no input → <code>null</code>; clears only your keys</td><td>60, then 20/s</td></tr>
+								<tr><td><code>venora.mentions.showAvatar</code></td><td><code>ui</code> <code>account</code> <code>network</code></td><td><code>{mentionId}</code> → <code>{shown}</code>. Venora looks the avatar up; you never see the URL.</td><td>100, then 50/s</td></tr>
+								<tr><td><code>venora.mentions.setAvatarSize</code></td><td><code>ui</code></td><td><code>{size}</code>, 12–32 px → <code>null</code></td><td>10, then 2/s</td></tr>
+								<tr><td><code>venora.on</code></td><td>per event</td><td><code>(event, listener)</code> → an unsubscribe function</td><td>20, then 2/s</td></tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="prose" style="margin-top:20px">
+						<p>The object also has <code>pluginId</code>, <code>apiVersion</code> (<code>1</code>), and <code>request(capability, payload)</code>, the low-level form of every method.</p>
+					</div>
+				</section>
+
+				<section class="doc-section" id="events" aria-labelledby="h-events">
+					<p class="eyebrow"><b>03</b> Events</p>
+					<h2 id="h-events">Listening with <code>venora.on</code></h2>
+					<div class="table-wrap">
+						<table>
+							<thead><tr><th scope="col">Event</th><th scope="col">Permissions</th><th scope="col">Payload</th><th scope="col">Sent when</th></tr></thead>
+							<tbody>
+								<tr><td><code>settings.changed</code></td><td><code>storage</code></td><td><code>{key, value}</code></td><td>The user changes one of <em>your</em> settings while your plugin runs. Only you receive it.</td></tr>
+								<tr><td><code>mentions.added</code></td><td><code>ui</code></td><td><code>{mentions: [{mentionId, userId}]}</code></td><td>Mentions appear on the page. New subscribers also get the ones already there, once each.</td></tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="prose" style="margin-top:20px">
+						<p>Delivery is at most once, in order, with no retries. Events that happen while you aren't subscribed aren't queued. Listeners can't cancel anything, and an exception in one is reported without affecting the others. Internal Venora events are never visible to plugins.</p>
+					</div>
+				</section>
+
+				<section class="doc-section" id="permissions" aria-labelledby="h-perms">
+					<p class="eyebrow"><b>04</b> Permissions</p>
+					<h2 id="h-perms">Declare what you need, nothing more</h2>
+					<div class="prose">
+						<p>A capability needs <em>all</em> of its permissions. Without one, the call rejects with <code>permission_denied</code> before your payload is even read. Permissions are fixed per installed version: there are no runtime prompts and no optional permissions. Adding a sensitive permission in an update means the user sees the warning again.</p>
+					</div>
+					<div class="perm-mini">
+						<div><code>storage</code><span>settings and storage</span></div>
+						<div><code>ui</code><span>toasts, CSS, mentions</span></div>
+						<div><code class="is-sensitive">network</code><span>sensitive · avatar lookup only</span></div>
+						<div><code class="is-sensitive">account</code><span>sensitive · avatar lookup only</span></div>
+					</div>
+				</section>
+
+				<section class="doc-section" id="settings-storage" aria-labelledby="h-settings">
+					<p class="eyebrow"><b>05</b> Settings &amp; storage</p>
+					<h2 id="h-settings">The user's choices, and your own data</h2>
+					<div class="split-list">
+						<div>
+							<h3><i data-icon="settings-2"></i>Settings</h3>
+							<ul role="list">
+								<li><i data-icon="chevron-right"></i>Declared in <code>plugin.json</code>: <code>boolean</code>, <code>string</code>, <code>number</code> (with <code>min</code>, <code>max</code>, <code>step</code>) or <code>select</code></li>
+								<li><i data-icon="chevron-right"></i>Written only by the user, in a dialog Venora draws. There is no <code>settings.set</code>.</li>
+								<li><i data-icon="chevron-right"></i>Read them at start, then follow <code>settings.changed</code></li>
+							</ul>
+						</div>
+						<div>
+							<h3><i data-icon="database"></i>Storage</h3>
+							<ul role="list">
+								<li><i data-icon="chevron-right"></i>Keys of 1–100 characters; values are plain data</li>
+								<li><i data-icon="chevron-right"></i>64 KiB per value, 1 MiB and 1,000 keys per plugin, else <code>quota_exceeded</code></li>
+								<li><i data-icon="chevron-right"></i>Atomic, applied in call order, kept across reloads and updates, deleted on uninstall</li>
+							</ul>
+						</div>
+					</div>
+					<div class="note">
+						<i data-icon="info"></i>
+						<p>Storage lives in the browser profile and is shared by every Fermo account used there, so don't assume data belongs to the current account. Each tab runs its own instance, and simultaneous writes from two tabs can lose one tab's change.</p>
+					</div>
+					<div class="doc-links">
+						<a class="link-arrow" href="{{ doc:plugin-settings-storage.md }}" rel="noopener">Settings and storage rules <i data-icon="arrow-up-right"></i></a>
+					</div>
+				</section>
+
+				<section class="doc-section" id="css" aria-labelledby="h-css">
+					<p class="eyebrow"><b>06</b> UI &amp; CSS</p>
+					<h2 id="h-css">Changing how Fermo looks</h2>
+					<div class="prose">
+						<p>Name a stylesheet in <code>"css"</code> and declare <code>ui</code>. Venora applies it while your plugin runs and removes it when it stops. The CSS isn't applied if it contains <code>url(</code>, <code>@import</code>, <code>image-set(</code>, a backslash (among a few others), a quoted string other than <code>""</code>, or <code>@counter-style</code>, because those can load resources or write text onto the page. It also has to be under 131,072 characters. Your plugin still runs, and the reason is logged.</p>
+						<p>Plugin CSS applies to Fermo's page only. It can't reach Venora's dialogs, notices or Plugins page. There's no API for the DOM, dialogs or rendering HTML.</p>
+					</div>
+				</section>
+
+				<section class="doc-section" id="lifecycle" aria-labelledby="h-life">
+					<p class="eyebrow"><b>07</b> Lifecycle</p>
+					<h2 id="h-life">When your code runs</h2>
+					<ol class="lifecycle" role="list" aria-label="Runtime states">
+						<li><code>starting</code><span>module loads; default export runs; API available</span></li>
+						<li><code>running</code><span>export returned or resolved</span></li>
+						<li><code>stopping</code><span>cleanup runs; API calls get <code>runtime_stopped</code></span></li>
+						<li><code>stopped</code><span>frame removed; page additions removed</span></li>
+					</ol>
+					<div class="prose" style="margin-top:20px">
+						<ul>
+							<li>Plugins start on <code>/channels/</code> pages and stop when Fermo navigates elsewhere. The same tab can start and stop your plugin many times, and each start is a fresh module instance.</li>
+							<li>Startup has 10 seconds. Start long work without awaiting it. Cleanup has 2 seconds.</li>
+							<li>Cleanup is <em>not</em> guaranteed: it doesn't run on reload, tab close, or when Venora terminates a plugin. Save data when it changes, not on the way out.</li>
+							<li>A plugin that fails to start shows <code>failed</code> with its error on its card and isn't retried until the next page load or navigation back to a channel.</li>
+						</ul>
+					</div>
+					<div class="doc-links">
+						<a class="link-arrow" href="{{ doc:plugin-lifecycle.md }}" rel="noopener">Plugin lifecycle <i data-icon="arrow-up-right"></i></a>
+					</div>
+				</section>
+
+				<section class="doc-section" id="environment" aria-labelledby="h-env">
+					<p class="eyebrow"><b>08</b> Environment</p>
+					<h2 id="h-env">What's available, and what isn't</h2>
+					<div class="split-list">
+						<div class="yes">
+							<h3><i data-icon="circle-check"></i>Available</h3>
+							<ul role="list">
+								<li><i data-icon="check"></i>The <code>venora</code> object</li>
+								<li><i data-icon="check"></i>Standard JavaScript built-ins, <code>console</code> and timers</li>
+								<li><i data-icon="check"></i><code>crypto.getRandomValues</code>, <code>TextEncoder</code>/<code>TextDecoder</code>, <code>Intl</code></li>
+							</ul>
+						</div>
+						<div class="no">
+							<h3><i data-icon="circle-x"></i>Blocked on purpose</h3>
+							<ul role="list">
+								<li><i data-icon="x"></i><code>fetch</code>, XHR, WebSocket and loading any resource</li>
+								<li><i data-icon="x"></i><code>window</code>, <code>document</code> and navigation</li>
+								<li><i data-icon="x"></i><code>localStorage</code>, IndexedDB, cookies and <code>chrome.*</code></li>
+								<li><i data-icon="x"></i><code>eval</code>, <code>new Function</code> and relative imports (bundle into one file)</li>
+								<li><i data-icon="x"></i><code>alert</code>, <code>confirm</code>, <code>prompt</code> and popups</li>
+							</ul>
+						</div>
+					</div>
+				</section>
+
+				<section class="doc-section" id="errors" aria-labelledby="h-errors">
+					<p class="eyebrow"><b>09</b> Errors &amp; limits</p>
+					<h2 id="h-errors">Handle <code>error.code</code>, not the message</h2>
+					<div class="prose">
+						<p>Failed calls reject with an <code>Error</code> carrying a stable <code>code</code>. Messages are for humans and can change. Treat an unknown code as a general failure, because new codes may be added.</p>
+					</div>
+					<div class="codes">
+						<div><code>permission_denied</code><span>a required permission isn't declared</span></div>
+						<div><code>invalid_payload</code><span>wrong type, out of range, or an undeclared setting key</span></div>
+						<div><code>rate_limited</code><span>over a request limit; nothing was done</span></div>
+						<div><code>quota_exceeded</code><span>a storage limit; nothing was written</span></div>
+						<div><code>timeout</code><span>no answer in 30 s; it may still have happened</span></div>
+						<div><code>runtime_stopped</code><span>called during or after cleanup</span></div>
+						<div><code>unknown_capability</code><span>a typo, or a newer Venora's capability</span></div>
+						<div><code>unknown_event</code><span>not a public event</span></div>
+						<div><code>sensitive_data_blocked</code><span>the result contained a session token</span></div>
+						<div><code>capability_failed</code><span>an internal failure; details stay in Venora</span></div>
+						<div><code>invalid_message</code><span>the request couldn't be read</span></div>
+					</div>
+					<div class="prose" style="margin-top:24px">
+						<p>Each plugin also has request, event and message limits, a watchdog, and storage and install size caps. A plugin that keeps exceeding them is stopped. The full table is on the <a href="/security/#limits">security page</a>.</p>
+					</div>
+				</section>
+
+				<section class="doc-section" id="versioning" aria-labelledby="h-version">
+					<p class="eyebrow"><b>10</b> Versioning</p>
+					<h2 id="h-version">What API v{{ apiVersion }} promises</h2>
+					<div class="prose">
+						<p>Within version 1, Venora may add capabilities, events, optional fields and error codes, and may raise limits. It won't remove or rename anything, add a permission to an existing capability, or lower a limit. Those need API version 2. The one exception is a breaking change needed to fix a vulnerability, which must be as small as possible and documented in the release notes.</p>
+						<p>When you use something added in a later Venora release, set <code>minVenoraVersion</code> so older releases refuse to install your plugin instead of failing at runtime.</p>
+					</div>
+				</section>
+
+				<section class="doc-section" id="docs" aria-labelledby="h-docs">
+					<p class="eyebrow"><b>11</b> Reference</p>
+					<h2 id="h-docs">Documentation in the repository</h2>
+					<div class="doc-grid">
+						<a class="doc-card" href="{{ doc:plugin-api.md }}" rel="noopener"><b>plugin-api.md</b><span>The API v1 specification: capabilities, events, errors, versioning</span><i data-icon="arrow-up-right"></i></a>
+						<a class="doc-card" href="{{ doc:plugin-manifest.md }}" rel="noopener"><b>plugin-manifest.md</b><span>Every <code>plugin.json</code> field, and ZIP packaging</span><i data-icon="arrow-up-right"></i></a>
+						<a class="doc-card" href="{{ doc:plugin-permissions.md }}" rel="noopener"><b>plugin-permissions.md</b><span>Permissions and the capabilities they unlock</span><i data-icon="arrow-up-right"></i></a>
+						<a class="doc-card" href="{{ doc:plugin-lifecycle.md }}" rel="noopener"><b>plugin-lifecycle.md</b><span>When code runs, cleanup, install, update and uninstall</span><i data-icon="arrow-up-right"></i></a>
+						<a class="doc-card" href="{{ doc:plugin-settings-storage.md }}" rel="noopener"><b>plugin-settings-storage.md</b><span>Settings declarations and private storage</span><i data-icon="arrow-up-right"></i></a>
+						<a class="doc-card" href="{{ doc:plugin-security.md }}" rel="noopener"><b>plugin-security.md</b><span>The mandatory security requirements</span><i data-icon="arrow-up-right"></i></a>
+						<a class="doc-card" href="{{ doc:runtime-architecture.md }}" rel="noopener"><b>runtime-architecture.md</b><span>How the sandbox and bridge are built</span><i data-icon="arrow-up-right"></i></a>
+						<a class="doc-card" href="{{ file:CONTRIBUTING.md }}" rel="noopener"><b>CONTRIBUTING.md</b><span>Working on Venora itself, and changing the API</span><i data-icon="arrow-up-right"></i></a>
+					</div>
+				</section>
+			</div>
+
+			<nav class="toc" aria-label="On this page">
+				<h2>On this page</h2>
+				<ul role="list">
+					<li><a href="#quick-start">Quick start</a></li>
+					<li><a href="#venora-object">The venora object</a></li>
+					<li><a href="#events">Events</a></li>
+					<li><a href="#permissions">Permissions</a></li>
+					<li><a href="#settings-storage">Settings &amp; storage</a></li>
+					<li><a href="#css">UI &amp; CSS</a></li>
+					<li><a href="#lifecycle">Lifecycle</a></li>
+					<li><a href="#environment">Environment</a></li>
+					<li><a href="#errors">Errors &amp; limits</a></li>
+					<li><a href="#versioning">Versioning</a></li>
+					<li><a href="#docs">Reference</a></li>
+				</ul>
+			</nav>
+		</div>
+	</section>
+
+</main>
+<!-- @include footer -->
+</div>
+</body>
+</html>

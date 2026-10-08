@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Install · Venora</title>
+	<meta name="description" content="Install Venora from source in a Chromium-based desktop browser using developer mode, then add plugins to the Fermo web client.">
+	<meta property="og:title" content="Install Venora">
+	<!-- @include head -->
+</head>
+<body data-page="install">
+<!-- @include sidebar -->
+<div class="page">
+<main id="main">
+
+	<header class="page-hero">
+		<div class="wrap">
+			<p class="eyebrow" data-reveal>Install</p>
+			<h1 data-reveal style="--d:1">Install from <em>source.</em></h1>
+			<p class="lede" data-reveal style="--d:2">Venora isn't in any browser extension store yet. You load it into a Chromium-based desktop browser in developer mode, straight from the repository. There is no build step and nothing else to install.</p>
+			<ul class="pills" role="list" data-reveal style="--d:3">
+				<li class="pill pill--warn"><i data-icon="info"></i>No store release yet</li>
+				<li class="pill">Unpacked extension · no .crx</li>
+				<li class="pill">Updates are manual</li>
+			</ul>
+		</div>
+	</header>
+
+	<section class="section section--tight" aria-labelledby="req-title">
+		<div class="wrap">
+			<h2 id="req-title" class="visually-hidden">Requirements</h2>
+			<div class="cells" style="--cols:3">
+				<div class="cell" data-reveal>
+					<span class="cell__icon"><i data-icon="monitor"></i></span>
+					<h3>A Chromium desktop browser</h3>
+					<p>Google Chrome, or another Chromium-based desktop browser that can load unpacked extensions. Venora's automated browser tests run in Chromium (Microsoft Edge).</p>
+				</div>
+				<div class="cell" data-reveal style="--d:1">
+					<span class="cell__icon"><i data-icon="globe"></i></span>
+					<h3>The Fermo web client</h3>
+					<p>Venora works only on the hosted Fermo client at <a class="inline" href="{{ fermoUrl }}" rel="noopener">{{ fermoHost }}</a>. Plugins run on its <code>/channels/</code> pages.</p>
+				</div>
+				<div class="cell" data-reveal style="--d:2">
+					<span class="cell__icon"><i data-icon="ban"></i></span>
+					<h3>Not supported yet</h3>
+					<p>Firefox, Safari, mobile browsers, Fermo's desktop app, self-hosted Fermo instances and other Spacebar clients.</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section class="section" aria-labelledby="steps-title">
+		<div class="wrap with-toc">
+			<div>
+				<section class="doc-section" id="install" aria-labelledby="steps-title">
+					<p class="eyebrow"><b>01</b> Install Venora</p>
+					<h2 id="steps-title">Six steps</h2>
+					<ol class="steps-list" role="list">
+						<li>
+							<h3>Get the code</h3>
+							<p>Clone the repository, or <a class="inline" href="{{ zipUrl }}" rel="noopener">download it as a ZIP</a> and unzip it somewhere you'll keep it. The browser loads Venora from that folder, so don't delete it afterwards.</p>
+							<div class="code">
+								<div class="code__bar"><i data-icon="terminal"></i>Terminal</div>
+<pre tabindex="0"><code class="language-bash">$ git clone {{ repoUrl }}.git</code></pre>
+							</div>
+							<p class="steps-list__aside">The repository also references Fermo's source as a git submodule, for reference only. You don't need it to run Venora.</p>
+						</li>
+						<li>
+							<h3>Open the extensions page</h3>
+							<p>Type <code>chrome://extensions</code> into the address bar. In Microsoft Edge, it's <code>edge://extensions</code>.</p>
+						</li>
+						<li>
+							<h3>Turn on Developer mode</h3>
+							<p>Switch on <strong>Developer mode</strong> on the extensions page. This lets the browser load an extension from a folder.</p>
+						</li>
+						<li>
+							<h3>Load the <code>venora-chrome</code> folder</h3>
+							<p>Click <strong>Load unpacked</strong> and select the <code>venora-chrome/</code> folder <em>inside</em> the repository, not the repository itself. Venora appears in the list as version {{ venoraVersion }}.</p>
+						</li>
+						<li>
+							<h3>Open Fermo</h3>
+							<p>Open or reload <a class="inline" href="{{ fermoUrl }}" rel="noopener">{{ fermoHost }}</a> and go to a channel. A short notice says <q>Venora is running. Plugins are enabled.</q></p>
+						</li>
+						<li>
+							<h3>Find the Plugins page</h3>
+							<p>Open Fermo's settings and choose <strong>Plugins</strong>. That's where you add, configure and remove plugins.</p>
+						</li>
+					</ol>
+					<div class="note">
+						<i data-icon="life-buoy"></i>
+						<p><strong>Pin the Venora toolbar button.</strong> It's your way back if a plugin ever makes Fermo hard to use. Open your browser's extensions menu and pin Venora. Its menu can turn on safe mode, and disable or uninstall any plugin, without going through Fermo's page.</p>
+					</div>
+				</section>
+
+				<section class="doc-section" id="plugins" aria-labelledby="h-plugins">
+					<p class="eyebrow"><b>02</b> Add a plugin</p>
+					<h2 id="h-plugins">Install a plugin from a ZIP</h2>
+					<ol class="steps-list steps-list--compact" role="list">
+						<li><p>Get the plugin's ZIP from someone you trust. There is no plugin registry yet, so plugins are shared as files.</p></li>
+						<li><p>In Fermo, open <strong>Settings → Plugins</strong> and choose <strong>Add plugin</strong>, then pick the ZIP.</p></li>
+						<li><p>Venora checks the whole package before saving anything. If the plugin declares a sensitive permission (<code>network</code> or <code>account</code>), you'll be asked to confirm it.</p></li>
+						<li><p>The page reloads and the plugin starts on channel pages. Its card shows its state, for example <q>Running in sandbox</q>.</p></li>
+					</ol>
+					<div class="note">
+						<i data-icon="flask-conical"></i>
+						<p><strong>Want to see the sandbox at work?</strong> The repository includes <code>examples/hello-runtime/</code>. Compress that folder into a ZIP and add it. With the developer console open on a channel page, it logs that the network, the page and extension APIs are all blocked.</p>
+					</div>
+				</section>
+
+				<section class="doc-section" id="update" aria-labelledby="h-update">
+					<p class="eyebrow"><b>03</b> Updates</p>
+					<h2 id="h-update">Keeping things up to date</h2>
+					<h3>Updating Venora</h3>
+					<p class="prose">Extensions loaded in developer mode don't update themselves. Pull the latest code, or download it again into the same folder, then click <strong>Reload</strong> on Venora in the extensions page and reload Fermo.</p>
+					<div class="code">
+						<div class="code__bar"><i data-icon="terminal"></i>Terminal · in the repository</div>
+<pre tabindex="0"><code class="language-bash">$ git pull</code></pre>
+					</div>
+					<h3>Updating a plugin</h3>
+					<p class="prose">Choose <strong>Add plugin</strong> and pick a newer ZIP of the same plugin. Venora shows the installed and new versions with the new release notes, and replaces the plugin only if you choose <strong>Update</strong>. Its settings and data are kept.</p>
+				</section>
+
+				<section class="doc-section" id="trouble" aria-labelledby="h-trouble">
+					<p class="eyebrow"><b>04</b> Troubleshooting</p>
+					<h2 id="h-trouble">If something isn't right</h2>
+					<dl class="faq">
+						<div><dt>There's no Plugins page in Fermo's settings.</dt><dd>Check that you're on <code>{{ fermoHost }}</code>, which is the only site Venora runs on, and that Venora is enabled in the extensions page. Then reload Fermo.</dd></div>
+						<div><dt>A plugin made Fermo hard to use.</dt><dd>Click the Venora button in the browser toolbar and turn on <strong>safe mode</strong>. It stops every imported plugin straight away. Then disable or uninstall the culprit from the same menu.</dd></div>
+						<div><dt>A plugin card says “Failed to run” or “Not compatible”.</dt><dd>The card shows the reason. Other plugins keep running. A failed plugin is tried again when you leave the channel and come back, or reload. An incompatible one needs a newer Venora or a different plugin version.</dd></div>
+						<div><dt>The install was rejected.</dt><dd>Venora explains which check failed, for example an invalid <code>plugin.json</code>, an unknown permission, or a file that's too large. Nothing was saved.</dd></div>
+						<div><dt>How do I remove Venora?</dt><dd>Click <strong>Remove</strong> on Venora in the extensions page. The browser deletes the extension's storage, which includes your plugins and their settings and data.</dd></div>
+					</dl>
+				</section>
+			</div>
+
+			<nav class="toc" aria-label="On this page">
+				<h2>On this page</h2>
+				<ul role="list">
+					<li><a href="#install">Install Venora</a></li>
+					<li><a href="#plugins">Add a plugin</a></li>
+					<li><a href="#update">Updates</a></li>
+					<li><a href="#trouble">Troubleshooting</a></li>
+				</ul>
+			</nav>
+		</div>
+	</section>
+
+</main>
+<!-- @include footer -->
+</div>
+</body>
+</html>

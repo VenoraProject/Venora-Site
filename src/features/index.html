@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Features · Venora</title>
+	<meta name="description" content="Everything Venora does today: a Plugins page in Fermo's settings, ZIP installs, permissions, settings, manual updates with release notes, safe mode, a recovery menu, and three bundled plugins.">
+	<meta property="og:title" content="Venora features">
+	<!-- @include head -->
+</head>
+<body data-page="features">
+<!-- @include sidebar -->
+<div class="page">
+<main id="main">
+
+	<header class="page-hero">
+		<div class="wrap">
+			<p class="eyebrow" data-reveal>Features</p>
+			<h1 data-reveal style="--d:1">Everything Venora does <em>today.</em></h1>
+			<p class="lede" data-reveal style="--d:2">This is the feature set of Venora {{ venoraVersion }}. If something isn't on this page, it isn't in Venora yet. The <a class="inline" href="/roadmap/">roadmap</a> says what's planned.</p>
+		</div>
+	</header>
+
+	<section class="section" aria-labelledby="manager-title">
+		<div class="wrap">
+			<div class="section-head section-head--split">
+				<div data-reveal>
+					<p class="eyebrow"><b>01</b> Plugin manager</p>
+					<h2 id="manager-title" class="display">A Plugins page inside Fermo's settings.</h2>
+				</div>
+				<p class="lede" data-reveal style="--d:1">Each plugin has a card with its name, version, author and description. Imported plugins are marked as imported.</p>
+			</div>
+			<div class="cells" style="--cols:3">
+				<article class="cell" data-reveal>
+					<span class="cell__icon"><i data-icon="package"></i></span>
+					<h3>Install from a ZIP</h3>
+					<p>Choose <b>Add plugin</b> and pick a ZIP with <code>plugin.json</code> and its entry script, at the root or inside one folder. Every part is validated before anything is stored.</p>
+				</article>
+				<article class="cell" data-reveal style="--d:1">
+					<span class="cell__icon"><i data-icon="toggle-right"></i></span>
+					<h3>Enable and disable</h3>
+					<p>Switch optional plugins on and off. A greyed-out, checked box marks a required bundled plugin. Imported plugins can never make themselves required.</p>
+				</article>
+				<article class="cell" data-reveal style="--d:2">
+					<span class="cell__icon"><i data-icon="key-round"></i></span>
+					<h3>Permissions, in plain words</h3>
+					<p>See what each plugin declared, with a description of every permission. Sensitive ones need your confirmation at install and at every update that declares them.</p>
+				</article>
+				<article class="cell" data-reveal>
+					<span class="cell__icon"><i data-icon="settings-2"></i></span>
+					<h3>Plugin settings</h3>
+					<p>Plugins declare settings, and Venora draws the dialog: on/off switches, text, numbers with limits, and choices from a list. Only you can change them, and a running plugin can subscribe to hear when you do.</p>
+				</article>
+				<article class="cell" data-reveal style="--d:1">
+					<span class="cell__icon"><i data-icon="refresh-cw"></i></span>
+					<h3>Manual updates</h3>
+					<p>Add a newer ZIP of an installed plugin. Venora compares versions using semantic versioning, shows the release notes, and keeps the plugin's settings and data.</p>
+				</article>
+				<article class="cell" data-reveal style="--d:2">
+					<span class="cell__icon"><i data-icon="trash-2"></i></span>
+					<h3>Clean uninstall</h3>
+					<p>Uninstalling an imported plugin stops it and deletes its files, enabled state, settings and stored data. Nothing of it remains.</p>
+				</article>
+				<article class="cell" data-reveal>
+					<span class="cell__icon"><i data-icon="scroll-text"></i></span>
+					<h3>Release notes</h3>
+					<p>Plugins can ship a changelog of breaking changes, new features, improvements and bug fixes. Update prompts show the new version's notes, and the info dialog shows the whole history.</p>
+				</article>
+				<article class="cell" data-reveal style="--d:1">
+					<span class="cell__icon"><i data-icon="git-branch"></i></span>
+					<h3>Compatibility checks</h3>
+					<p>A plugin can require a Plugin API version and a minimum Venora version. Incompatible plugins are refused at install, and skipped at load with the reason on their card.</p>
+				</article>
+				<article class="cell" data-reveal style="--d:2">
+					<span class="cell__icon"><i data-icon="users"></i></span>
+					<h3>Author information</h3>
+					<p>A plugin's author, or list of maintainers, is shown as “By …” on its card. Like every plugin-provided string, it is shown as text, never as HTML.</p>
+				</article>
+			</div>
+		</div>
+	</section>
+
+	<section class="section" aria-labelledby="state-title">
+		<div class="wrap split">
+			<div class="split__text">
+				<div data-reveal>
+					<p class="eyebrow"><b>02</b> At a glance</p>
+					<h2 id="state-title" class="display">Every card says what its plugin is doing.</h2>
+				</div>
+				<p class="lede" data-reveal style="--d:1">Plugins start when you open a channel and stop when you leave. If one fails, its card says why, and the others keep running.</p>
+			</div>
+			<ul class="states frame" role="list" data-reveal style="--d:1" aria-label="Plugin card status messages">
+				<li><span class="states__dot states__dot--ok" aria-hidden="true"></span><span>Running in sandbox</span></li>
+				<li><span class="states__dot states__dot--bad" aria-hidden="true"></span><span>Failed to run: <i>reason</i></span></li>
+				<li><span class="states__dot states__dot--warn" aria-hidden="true"></span><span>Not compatible: <i>reason</i></span></li>
+				<li><span class="states__dot" aria-hidden="true"></span><span>Not running: safe mode is on</span></li>
+				<li><span class="states__dot states__dot--bad" aria-hidden="true"></span><span>Stopped after repeated problems on this page.</span></li>
+				<li><span class="states__dot states__dot--accent" aria-hidden="true"></span><span>Required · Imported</span></li>
+			</ul>
+		</div>
+	</section>
+
+	<section class="section" aria-labelledby="recover-title">
+		<div class="wrap">
+			<div class="section-head section-head--split">
+				<div data-reveal>
+					<p class="eyebrow"><b>03</b> Safe mode &amp; recovery</p>
+					<h2 id="recover-title" class="display">A way out that no plugin can cover up.</h2>
+				</div>
+				<p class="lede" data-reveal style="--d:1">Plugin CSS can restyle Fermo's page, including its settings. So Venora keeps its controls somewhere plugins can't reach.</p>
+			</div>
+			<div class="split-list">
+				<div class="yes" data-reveal>
+					<h3><i data-icon="life-buoy"></i>Safe mode</h3>
+					<ul role="list">
+						<li><i data-icon="check"></i>Stops every imported plugin and removes its CSS, without a reload</li>
+						<li><i data-icon="check"></i>Bundled plugins keep running</li>
+						<li><i data-icon="check"></i>A switch on the Plugins page and in the toolbar menu</li>
+					</ul>
+				</div>
+				<div class="yes" data-reveal style="--d:1">
+					<h3><i data-icon="square-terminal"></i>The Venora toolbar menu</h3>
+					<ul role="list">
+						<li><i data-icon="check"></i>Lives outside Fermo's page, so plugin CSS doesn't apply to it</li>
+						<li><i data-icon="check"></i>Enable or disable plugins, and uninstall imported ones</li>
+						<li><i data-icon="check"></i>Open Fermo tabs apply each change immediately</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section class="section" aria-labelledby="runtime-feat-title">
+		<div class="wrap">
+			<div class="section-head section-head--split">
+				<div data-reveal>
+					<p class="eyebrow"><b>04</b> Runtime</p>
+					<h2 id="runtime-feat-title" class="display">What every plugin runs inside.</h2>
+				</div>
+				<p class="lede" data-reveal style="--d:1">The same runtime applies to bundled and imported plugins alike. The <a class="inline" href="/security/">security page</a> covers each part in depth.</p>
+			</div>
+			<div class="cells" style="--cols:4">
+				<div class="cell" data-reveal><span class="cell__icon"><i data-icon="box"></i></span><h3>Sandbox</h3><p>A dedicated worker in a sandboxed frame: no DOM, no network, no extension APIs.</p></div>
+				<div class="cell" data-reveal style="--d:1"><span class="cell__icon"><i data-icon="key-round"></i></span><h3>Capabilities</h3><p>Privileged work happens only through a fixed set of permission-checked capabilities.</p></div>
+				<div class="cell" data-reveal style="--d:2"><span class="cell__icon"><i data-icon="fingerprint"></i></span><h3>Token protection</h3><p>Plugins are never sent your Fermo session token. A guard checks every message.</p></div>
+				<div class="cell" data-reveal style="--d:3"><span class="cell__icon"><i data-icon="database"></i></span><h3>Private storage</h3><p>Each plugin gets its own key–value store of up to 1 MiB, kept across reloads and updates.</p></div>
+				<div class="cell" data-reveal><span class="cell__icon"><i data-icon="bell"></i></span><h3>Events</h3><p>Plugins can subscribe to setting changes and to mentions appearing on the page.</p></div>
+				<div class="cell" data-reveal style="--d:1"><span class="cell__icon"><i data-icon="palette"></i></span><h3>Plugin CSS</h3><p>A plugin with <code>ui</code> can restyle Fermo. CSS that loads resources or writes text isn't applied.</p></div>
+				<div class="cell" data-reveal style="--d:2"><span class="cell__icon"><i data-icon="gauge"></i></span><h3>Resource limits</h3><p>Per-plugin request, event and message limits, timeouts, and caps on storage and install size.</p></div>
+				<div class="cell" data-reveal style="--d:3"><span class="cell__icon"><i data-icon="heart-pulse"></i></span><h3>Watchdog</h3><p>Stops plugins that stop responding. A plugin that keeps misbehaving stays off until you reload.</p></div>
+			</div>
+		</div>
+	</section>
+
+	<section class="section" aria-labelledby="bundled-title">
+		<div class="wrap">
+			<div class="section-head" data-reveal>
+				<p class="eyebrow"><b>05</b> Bundled plugins</p>
+				<h2 id="bundled-title" class="display">Included with Venora.</h2>
+			</div>
+			<div class="table-wrap" data-reveal>
+				<table>
+					<thead><tr><th scope="col">Plugin</th><th scope="col">What it does</th><th scope="col">Permissions</th><th scope="col">Can disable</th></tr></thead>
+					<tbody>
+						<tr><td><strong>Mention avatars</strong><br><span class="card__meta">1.2.0</span></td><td>Shows the mentioned user's avatar beside their name. Setting: avatar size, 12–32 px.</td><td><code>ui</code> <code>storage</code> <code>account</code> <code>network</code></td><td>Yes</td></tr>
+						<tr><td><strong>UI fixes</strong><br><span class="card__meta">1.0.0</span></td><td>CSS refinements for Fermo's account controls, search field and related layout.</td><td><code>ui</code></td><td>No, required</td></tr>
+						<tr><td><strong>Venora status</strong><br><span class="card__meta">1.2.0</span></td><td>Briefly confirms that Venora is running when Fermo loads.</td><td><code>ui</code></td><td>No, required</td></tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</section>
+
+	<section class="section section--tight" aria-labelledby="notyet-title">
+		<div class="wrap">
+			<div class="notyet frame" data-reveal>
+				<div>
+					<p class="eyebrow">Not in Venora yet</p>
+					<h2 id="notyet-title" class="display display--sm">Planned, not shipped.</h2>
+				</div>
+				<ul class="pills" role="list">
+					<li class="pill">Firefox support</li>
+					<li class="pill">Store releases</li>
+					<li class="pill">Automatic updates</li>
+					<li class="pill">Plugin registry</li>
+					<li class="pill">Plugin discovery</li>
+					<li class="pill">Publisher verification</li>
+				</ul>
+				<a class="link-arrow" href="/roadmap/">See the roadmap <i data-icon="arrow-right"></i></a>
+			</div>
+		</div>
+	</section>
+
+</main>
+<!-- @include footer -->
+</div>
+</body>
+</html>

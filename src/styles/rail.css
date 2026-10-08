@@ -1,0 +1,227 @@
+/* The navigation rail ------------------------------------------------------------------------------------------
+   Desktop (≥ 1200px): a fixed rail that pushes the page when expanded.
+   Tablet (768–1199px): the same rail, but expanding overlays the page with a scrim so the reading width stays put.
+   Phone (< 768px): a compact top bar; the rail becomes a full-label drawer. */
+
+.mark { width: 28px; height: 28px; flex: none; overflow: visible; }
+
+.rail {
+	--w: var(--rail-collapsed);
+	position: fixed; z-index: 40;
+	inset: 0 auto 0 0;
+	width: var(--w);
+	display: flex; flex-direction: column;
+	padding: 14px 12px;
+	background: linear-gradient(180deg, rgb(13 13 21 / 0.96), rgb(9 9 14 / 0.98));
+	border-right: 1px solid var(--line);
+	transition: width 0.34s var(--ease-out), box-shadow 0.34s var(--ease-out);
+	overflow: visible;
+}
+html[data-rail="expanded"] .rail { --w: var(--rail-expanded); }
+.no-anim .rail, .no-anim .rail * , .no-anim .page { transition: none !important; }
+
+/* A faint orbit line along the rail's edge: the one decorative flourish, echoing the mark. */
+.rail::after {
+	content: "";
+	position: absolute; top: 0; bottom: 0; right: -1px; width: 1px;
+	background: linear-gradient(180deg, transparent 0%, var(--accent-line) 18%, transparent 46%, transparent 70%, rgb(146 148 255 / 0.18) 88%, transparent);
+	pointer-events: none;
+}
+
+.rail__head { display: flex; align-items: center; justify-content: space-between; height: 44px; margin-bottom: 18px; }
+.rail__brand {
+	position: relative;
+	display: flex; align-items: center; gap: 12px;
+	height: 44px; padding: 0 8px;
+	border-radius: var(--radius);
+	white-space: nowrap;
+}
+.rail__brand .mark { width: 28px; height: 28px; transition: transform 0.6s var(--ease-out); }
+.rail__brand:hover .mark { transform: rotate(-12deg) scale(1.06); }
+.rail__wordmark {
+	font: 600 1.18rem/1 var(--font-display);
+	letter-spacing: -0.02em;
+	background: linear-gradient(90deg, #8b8dff, #c9caff);
+	-webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.rail__close { display: none; }
+
+.rail__nav { flex: 1; display: flex; flex-direction: column; gap: 4px; min-height: 0; overflow: visible; }
+.rail__list { display: flex; flex-direction: column; gap: 2px; }
+
+.rail__link, .rail__toggle, .rail__status {
+	position: relative;
+	display: flex; align-items: center; gap: 12px;
+	width: 100%; height: 42px;
+	padding: 0 11px;
+	border-radius: var(--radius);
+	color: var(--text-2);
+	white-space: nowrap;
+	transition: color 0.2s, background-color 0.2s;
+}
+.rail__icon { display: grid; place-items: center; width: 22px; height: 22px; flex: none; }
+.rail__icon .icon { width: 20px; height: 20px; }
+.rail__link:hover, .rail__toggle:hover, .rail__status:hover { color: var(--text); background: rgb(255 255 255 / 0.04); }
+
+.rail__link[aria-current="page"] { color: var(--text); background: var(--accent-tint); }
+.rail__link[aria-current="page"] .rail__icon { color: var(--accent-soft); }
+/* Current-page marker: a small four-point star on the rail's edge, the mark's own shape. */
+.rail__link[aria-current="page"]::before {
+	content: "";
+	position: absolute; left: -12px; top: 50%;
+	width: 9px; height: 14px; margin-top: -7px;
+	background: var(--accent);
+	clip-path: path("M0 0C.6 4.2 2 6.2 4.5 7 2 7.8.6 9.8 0 14Z");
+	transform: translateX(0);
+	filter: drop-shadow(0 0 6px rgb(117 119 255 / 0.8));
+}
+
+/* Labels fade and slide in as the rail widens, a little after the width starts to change. */
+.rail__label, .rail__wordmark, .rail__status-text {
+	opacity: 0;
+	transform: translateX(-6px);
+	transition: opacity 0.16s, transform 0.16s;
+	pointer-events: none;
+}
+html[data-rail="expanded"] :is(.rail__label, .rail__wordmark, .rail__status-text) {
+	opacity: 1; transform: none; pointer-events: auto;
+	transition: opacity 0.28s var(--ease-out) calc(90ms + var(--i, 0) * 22ms), transform 0.34s var(--ease-out) calc(90ms + var(--i, 0) * 22ms);
+}
+.rail__label { display: inline-flex; align-items: center; gap: 6px; font-size: 0.94rem; font-weight: 500; }
+.rail__ext { width: 13px; height: 13px; opacity: 0.55; }
+
+.rail__group {
+	position: relative;
+	height: 30px; margin: 14px 0 2px;
+	display: flex; align-items: center;
+	padding: 0 11px;
+	font: 500 0.7rem/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase;
+	color: var(--text-3);
+	white-space: nowrap;
+}
+.rail__group::before { /* collapsed: a short hairline instead of the word */
+	content: ""; position: absolute; left: 12px; right: 12px; top: 50%; height: 1px; background: var(--line-strong);
+	transition: opacity 0.2s;
+}
+.rail__group span { opacity: 0; transition: opacity 0.2s; }
+html[data-rail="expanded"] .rail__group::before { opacity: 0; }
+html[data-rail="expanded"] .rail__group span { opacity: 1; transition: opacity 0.3s 0.15s; }
+
+.rail__foot { display: flex; flex-direction: column; gap: 4px; padding-top: 12px; border-top: 1px solid var(--line); }
+.rail__status { height: 48px; }
+.rail__status .status-dot { margin: 0 6px; }
+.rail__status-text { display: flex; flex-direction: column; gap: 2px; font-size: 0.82rem; line-height: 1.1; color: var(--text-2); }
+.rail__status-text strong { color: var(--text); font-weight: 600; }
+.rail__status-text small { font: 500 0.68rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ok); }
+
+.rail__toggle .rail__label { gap: 10px; color: var(--text-3); }
+.rail__toggle-close { display: none; }
+html[data-rail="expanded"] .rail__toggle-open { display: none; }
+html[data-rail="expanded"] .rail__toggle-close { display: block; }
+
+.status-dot {
+	position: relative;
+	width: 8px; height: 8px; flex: none;
+	border-radius: 50%;
+	background: var(--ok);
+	box-shadow: 0 0 0 3px var(--ok-tint);
+}
+.status-dot::after {
+	content: ""; position: absolute; inset: -3px; border-radius: 50%;
+	border: 1px solid var(--ok);
+	animation: pulse 2.6s var(--ease-out) infinite;
+}
+@keyframes pulse { 0% { transform: scale(0.6); opacity: 0.9; } 80%, 100% { transform: scale(2.2); opacity: 0; } }
+
+/* Tooltips for the collapsed rail. The label is still in the accessibility tree, so these are visual only. */
+.rail__tip, .rail__brand::after, .rail__status::after {
+	position: absolute; left: calc(100% + 14px); top: 50%;
+	padding: 6px 10px;
+	display: inline-flex; align-items: center; gap: 8px;
+	font-size: 0.82rem; font-weight: 500; color: var(--text);
+	background: var(--surface-2);
+	border: 1px solid var(--line-strong);
+	border-radius: var(--radius-s);
+	box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
+	white-space: nowrap;
+	opacity: 0; pointer-events: none;
+	transform: translate(-4px, -50%);
+	transition: opacity 0.15s, transform 0.15s;
+	z-index: 2;
+}
+.rail__brand::after, .rail__status::after { content: attr(data-tip); }
+.rail__tip kbd { font-size: 0.68rem; }
+html:not([data-rail="expanded"]) :is(.rail__link, .rail__toggle, .rail__brand, .rail__status):is(:hover, :focus-visible) :is(.rail__tip),
+html:not([data-rail="expanded"]) :is(.rail__brand, .rail__status):is(:hover, :focus-visible)::after {
+	opacity: 1; transform: translate(0, -50%);
+	transition-delay: 0.08s;
+}
+
+/* Page offset -------------------------------------------------------------------------------------------------- */
+.page {
+	margin-left: var(--rail-collapsed);
+	transition: margin-left 0.34s var(--ease-out);
+}
+@media (min-width: 1200px) {
+	html[data-rail="expanded"] .page { margin-left: var(--rail-expanded); }
+}
+
+/* Top bar, hidden on wide screens. */
+.topbar { display: none; }
+.scrim {
+	position: fixed; inset: 0; z-index: 35;
+	background: rgb(4 4 8 / 0.62);
+	backdrop-filter: blur(2px);
+	opacity: 0;
+	transition: opacity 0.3s var(--ease-out);
+}
+.scrim.is-visible { opacity: 1; }
+
+/* Tablet: expanding overlays the page instead of pushing it. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+	html[data-rail="expanded"] .rail { box-shadow: 24px 0 60px rgb(0 0 0 / 0.5); }
+}
+
+/* Phone: top bar + drawer. */
+@media (max-width: 767.98px) {
+	.topbar {
+		position: sticky; top: 0; z-index: 30;
+		display: flex; align-items: center; gap: 12px;
+		height: 60px; padding: 0 8px 0 16px;
+		background: rgb(8 8 13 / 0.86);
+		backdrop-filter: blur(12px) saturate(1.2);
+		-webkit-backdrop-filter: blur(12px) saturate(1.2);
+		border-bottom: 1px solid var(--line);
+	}
+	.topbar__brand { display: flex; align-items: center; gap: 10px; font: 600 1.1rem/1 var(--font-display); letter-spacing: -0.02em; }
+	.topbar__brand .mark { width: 26px; height: 26px; }
+	.topbar__status {
+		display: inline-flex; align-items: center; gap: 8px; margin-left: auto;
+		font: 500 0.7rem/1 var(--font-mono); letter-spacing: 0.04em; color: var(--text-3);
+	}
+	.topbar__menu { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--radius); color: var(--text); }
+	.topbar__menu:hover { background: rgb(255 255 255 / 0.05); }
+	.topbar__menu .icon { width: 22px; height: 22px; }
+
+	.page { margin-left: 0 !important; }
+
+	.rail {
+		--w: min(300px, 86vw);
+		transform: translateX(-102%);
+		visibility: hidden;
+		transition: transform 0.36s var(--ease-out), visibility 0s linear 0.36s;
+		box-shadow: 24px 0 60px rgb(0 0 0 / 0.55);
+	}
+	html.drawer-open .rail { transform: none; visibility: visible; transition: transform 0.36s var(--ease-out), visibility 0s; }
+	/* In the drawer, labels are always shown. */
+	.rail :is(.rail__label, .rail__wordmark, .rail__status-text) { opacity: 1; transform: none; pointer-events: auto; }
+	.rail .rail__group::before { opacity: 0; }
+	.rail .rail__group span { opacity: 1; }
+	.rail__tip, .rail__brand::after, .rail__status::after { display: none; }
+	.rail__close { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--radius); color: var(--text-2); }
+	.rail__close:hover { color: var(--text); background: rgb(255 255 255 / 0.05); }
+	.rail__toggle { display: none; }
+	.rail__link { height: 46px; }
+	.rail__link[aria-current="page"]::before { left: -12px; }
+}
+@media (max-width: 380px) { .topbar__status { display: none; } }

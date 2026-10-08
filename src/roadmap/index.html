@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Roadmap · Venora</title>
+	<meta name="description" content="Where Venora is today, what has been built, and what is planned: browser support, distribution, developer experience, and later a plugin ecosystem.">
+	<meta property="og:title" content="Venora roadmap">
+	<!-- @include head -->
+</head>
+<body data-page="roadmap">
+<!-- @include sidebar -->
+<div class="page">
+<main id="main">
+
+	<header class="page-hero">
+		<div class="wrap">
+			<p class="eyebrow" data-reveal>Roadmap</p>
+			<h1 data-reveal style="--d:1">Built in the open, <em>one phase at a time.</em></h1>
+			<p class="lede" data-reveal style="--d:2">Venora is young. This page separates what exists from what's planned, so nothing here should surprise you after you install it.</p>
+		</div>
+	</header>
+
+	<section class="section section--tight" id="status" aria-labelledby="status-title">
+		<div class="wrap">
+			<div class="status-panel frame" data-reveal>
+				<div class="status-panel__main">
+					<p class="eyebrow"><span class="status-dot" aria-hidden="true"></span>Current status</p>
+					<h2 id="status-title" class="display display--sm">{{ phase }}: actively being developed.</h2>
+					<p class="lede">The plugin runtime and Plugin API v{{ apiVersion }} are implemented and tested in Chromium. Current work focuses on browser support, developer experience, documentation and distribution.</p>
+				</div>
+				<dl class="status-panel__facts">
+					<div><dt>Venora</dt><dd>{{ venoraVersion }}</dd></div>
+					<div><dt>Plugin API</dt><dd>v{{ apiVersion }}, complete</dd></div>
+					<div><dt>Latest milestone</dt><dd>Phase {{ phaseDetail }}</dd></div>
+					<div><dt>Distribution</dt><dd>From source only</dd></div>
+				</dl>
+			</div>
+		</div>
+	</section>
+
+	<section class="section" aria-labelledby="done-title">
+		<div class="wrap">
+			<div class="section-head" data-reveal>
+				<p class="eyebrow"><b>01</b> Done</p>
+				<h2 id="done-title" class="display">What's been built.</h2>
+			</div>
+			<ol class="timeline" role="list">
+				<li class="timeline__item is-done" data-reveal>
+					<span class="timeline__phase">Early phases</span>
+					<h3>A plugin manager for Fermo</h3>
+					<p>A Manifest V3 extension that adds a Plugins page to Fermo's settings, bundled plugins, ZIP import, a permissions dialog, and uninstall.</p>
+				</li>
+				<li class="timeline__item is-done" data-reveal>
+					<span class="timeline__phase">Phase 2.5</span>
+					<h3>The sandboxed runtime</h3>
+					<p>Every plugin, bundled ones included, moved out of the page into its own sandboxed frame, with a message bridge, permission-checked capabilities and the session-token guard.</p>
+				</li>
+				<li class="timeline__item is-done" data-reveal>
+					<span class="timeline__phase">Phase 3.1 – 3.2</span>
+					<h3>Plugin API v1, specified and implemented</h3>
+					<p>The namespaced <code>venora</code> API, private plugin storage, API-version enforcement, and validation of settings and manifests. The specification is checked against the code by tests.</p>
+				</li>
+				<li class="timeline__item is-done" data-reveal>
+					<span class="timeline__phase">Phase 3.3</span>
+					<h3>The UI security boundary</h3>
+					<p>Plugin code moved into a worker with no DOM, Venora's UI moved into protected shadow roots and the top layer, and plugin text, names and CSS were locked down.</p>
+				</li>
+				<li class="timeline__item is-done is-latest" data-reveal>
+					<span class="timeline__phase">Phase 3.4</span>
+					<h3>Runtime hardening and resource controls</h3>
+					<p>Per-plugin resource accounts, rate limits, message-size limits, capability timeouts, the watchdog, install size limits, and the toolbar recovery menu with safe mode.</p>
+				</li>
+			</ol>
+		</div>
+	</section>
+
+	<section class="section" aria-labelledby="next-title">
+		<div class="wrap">
+			<div class="section-head section-head--split">
+				<div data-reveal>
+					<p class="eyebrow"><b>02</b> Next</p>
+					<h2 id="next-title" class="display">What's being worked toward.</h2>
+				</div>
+				<p class="lede" data-reveal style="--d:1">Near-term work on Venora itself. None of these exist yet.</p>
+			</div>
+			<div class="cells" style="--cols:2">
+				<div class="cell" data-reveal><span class="pill pill--warn roadmap-pill">Planned</span><h3>Firefox and cross-browser support</h3><p>The API has nothing browser-specific, but the sandbox hasn't been run in Firefox. Open questions include sandbox manifest support, <code>data:</code> module imports, and whether the worker inherits the no-network policy.</p></div>
+				<div class="cell" data-reveal style="--d:1"><span class="pill pill--warn roadmap-pill">Planned</span><h3>Packed releases and distribution</h3><p>A packed extension release instead of loading the source folder in developer mode.</p></div>
+				<div class="cell" data-reveal><span class="pill pill--warn roadmap-pill">Planned</span><h3>Developer experience and documentation</h3><p>Better tooling and guides for plugin authors, building on the API v1 specification, plus clearer permission information for users.</p></div>
+				<div class="cell" data-reveal style="--d:1"><span class="pill pill--warn roadmap-pill">Planned</span><h3>Additional plugin APIs</h3><p>New capabilities can be added within API v1. Each needs a specification entry, permissions, tests and a security review first.</p></div>
+			</div>
+		</div>
+	</section>
+
+	<section class="section" aria-labelledby="later-title">
+		<div class="wrap">
+			<div class="section-head section-head--split">
+				<div data-reveal>
+					<p class="eyebrow"><b>03</b> Later</p>
+					<h2 id="later-title" class="display">A plugin ecosystem, eventually.</h2>
+				</div>
+				<p class="lede" data-reveal style="--d:1">Later phases. These need hosted infrastructure that doesn't exist yet. There is <strong>no</strong> registry, account system or hosted service today.</p>
+			</div>
+			<ul class="future-list" role="list">
+				<li data-reveal><i data-icon="store"></i><div><h3>Plugin registry and discovery</h3><p>Finding plugins from inside Venora instead of passing ZIP files around.</p></div><span class="pill">Future</span></li>
+				<li data-reveal><i data-icon="refresh-cw"></i><div><h3>Hosted and automatic updates</h3><p>Today, updates are manual and Venora never checks for new versions.</p></div><span class="pill">Future</span></li>
+				<li data-reveal><i data-icon="badge-check"></i><div><h3>Publisher verification</h3><p>A way to know who published a plugin. Today, nothing is signed or verified.</p></div><span class="pill">Future</span></li>
+				<li data-reveal><i data-icon="users"></i><div><h3>Maintainer accounts and profiles</h3><p>Identities for plugin maintainers, tied to a future registry.</p></div><span class="pill">Future</span></li>
+				<li data-reveal><i data-icon="sparkles"></i><div><h3>Maintainer badges</h3><p>Explained below.</p></div><span class="pill">Future</span></li>
+				<li data-reveal><i data-icon="scroll-text"></i><div><h3>Ratings, reviews and issue reporting</h3><p>Community feedback on plugins, once there is somewhere to host it.</p></div><span class="pill">Future</span></li>
+			</ul>
+
+			<div class="concept frame" data-reveal>
+				<div>
+					<p class="eyebrow">Concept · not implemented</p>
+					<h3 class="concept__title">Maintainer badges</h3>
+					<p>The idea is a badge beside a plugin maintainer's name in Fermo, seen only by people who have Venora installed. Because Venora runs in your browser, the badge would appear across Fermo instances, and a viewer wouldn't need the maintainer's plugin installed to see it.</p>
+					<p>Making that trustworthy needs hosted infrastructure: maintainer accounts and a source of truth for who maintains what. That belongs to the ecosystem phases above. Nothing like it is in Venora today.</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section class="section" aria-labelledby="out-title">
+		<div class="wrap">
+			<div class="section-head section-head--split">
+				<div data-reveal>
+					<p class="eyebrow"><b>04</b> Not in API v1</p>
+					<h2 id="out-title" class="display">Deliberately left out, for now.</h2>
+				</div>
+				<p class="lede" data-reveal style="--d:1">The API v1 specification excludes these. Any of them would need a specification change and a security review before it could be added.</p>
+			</div>
+			<ul class="pills pills--big" role="list" data-reveal>
+				<li class="pill">General network access</li>
+				<li class="pill">Account data APIs</li>
+				<li class="pill">DOM or arbitrary-element access</li>
+				<li class="pill">Plugin-to-plugin messaging</li>
+				<li class="pill">Commands</li>
+				<li class="pill">Notifications beyond toasts</li>
+				<li class="pill">RPC</li>
+				<li class="pill">TypeScript SDK</li>
+				<li class="pill">Hosted developer portal</li>
+			</ul>
+			<div class="doc-links" data-reveal>
+				<a class="link-arrow" href="{{ doc:plugin-api-status.md }}" rel="noopener">Implementation status in the repository <i data-icon="arrow-up-right"></i></a>
+				<a class="link-arrow" href="{{ file:README.md }}#project-status" rel="noopener">Project checklist <i data-icon="arrow-up-right"></i></a>
+			</div>
+		</div>
+	</section>
+
+</main>
+<!-- @include footer -->
+</div>
+</body>
+</html>

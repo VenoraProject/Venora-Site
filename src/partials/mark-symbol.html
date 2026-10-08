@@ -1,0 +1,16 @@
+<svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0">
+	<defs>
+		<linearGradient id="venora-star-fill" x1="0" y1="-50" x2="0" y2="50" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#c3c4ff"/>
+			<stop offset="1" stop-color="#6f71ff"/>
+		</linearGradient>
+		<mask id="venora-orbit-mask" maskUnits="userSpaceOnUse" x="-60" y="-60" width="120" height="120">
+			<rect x="-60" y="-60" width="120" height="120" fill="#fff"/>
+			<path d="M0-50C3-22 12-6 34 0 12 6 3 22 0 50-3 22-12 6-34 0-12-6-3-22 0-50Z" fill="#000" stroke="#000" stroke-width="16" stroke-linejoin="round"/>
+		</mask>
+		<symbol id="venora-mark" viewBox="-60 -60 120 120">
+			<ellipse class="mark-orbit" rx="54" ry="19" transform="rotate(-30)" fill="none" stroke="#7577ff" stroke-width="7" mask="url(#venora-orbit-mask)"/>
+			<path class="mark-star" d="M0-50C3-22 12-6 34 0 12 6 3 22 0 50-3 22-12 6-34 0-12-6-3-22 0-50Z" fill="url(#venora-star-fill)"/>
+		</symbol>
+	</defs>
+</svg>

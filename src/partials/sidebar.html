@@ -1,0 +1,64 @@
+<!-- @include mark-symbol -->
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- Small screens: a compact bar that opens the navigation as a drawer. -->
+<header class="topbar">
+	<a class="topbar__brand" href="/" aria-label="Venora home">
+		<svg class="mark" aria-hidden="true"><use href="#venora-mark"/></svg>
+		<span>Venora</span>
+	</a>
+	<span class="topbar__status"><span class="status-dot" aria-hidden="true"></span>v{{ venoraVersion }} · in development</span>
+	<button class="topbar__menu" type="button" aria-controls="site-nav" aria-expanded="false" data-drawer-toggle>
+		<i data-icon="menu"></i>
+		<span class="visually-hidden">Open navigation</span>
+	</button>
+</header>
+
+<aside class="rail" id="site-nav" aria-label="Site navigation">
+	<div class="rail__head">
+		<a class="rail__brand" href="/" data-tip="Venora">
+			<svg class="mark" aria-hidden="true"><use href="#venora-mark"/></svg>
+			<span class="rail__wordmark">Venora</span>
+			<span class="visually-hidden">home</span>
+		</a>
+		<button class="rail__close" type="button" data-drawer-close>
+			<i data-icon="x"></i>
+			<span class="visually-hidden">Close navigation</span>
+		</button>
+	</div>
+
+	<nav class="rail__nav" aria-label="Primary">
+		<ul class="rail__list" role="list">
+			<li style="--i:0"><a class="rail__link" href="/" data-nav="home"><span class="rail__icon"><i data-icon="house"></i></span><span class="rail__label">Home</span><span class="rail__tip" aria-hidden="true">Home</span></a></li>
+			<li style="--i:1"><a class="rail__link" href="/install/" data-nav="install"><span class="rail__icon"><i data-icon="download"></i></span><span class="rail__label">Install</span><span class="rail__tip" aria-hidden="true">Install</span></a></li>
+			<li style="--i:2"><a class="rail__link" href="/features/" data-nav="features"><span class="rail__icon"><i data-icon="blocks"></i></span><span class="rail__label">Features</span><span class="rail__tip" aria-hidden="true">Features</span></a></li>
+			<li style="--i:3"><a class="rail__link" href="/security/" data-nav="security"><span class="rail__icon"><i data-icon="shield-check"></i></span><span class="rail__label">Security &amp; privacy</span><span class="rail__tip" aria-hidden="true">Security &amp; privacy</span></a></li>
+			<li style="--i:4"><a class="rail__link" href="/developers/" data-nav="developers"><span class="rail__icon"><i data-icon="code-xml"></i></span><span class="rail__label">Developers</span><span class="rail__tip" aria-hidden="true">Developers</span></a></li>
+			<li style="--i:5"><a class="rail__link" href="/roadmap/" data-nav="roadmap"><span class="rail__icon"><i data-icon="milestone"></i></span><span class="rail__label">Roadmap</span><span class="rail__tip" aria-hidden="true">Roadmap</span></a></li>
+		</ul>
+
+		<p class="rail__group" aria-hidden="true"><span>Source</span></p>
+		<ul class="rail__list" role="list" aria-label="External">
+			<li style="--i:6"><a class="rail__link" href="{{ repoUrl }}" rel="noopener"><span class="rail__icon"><i data-icon="github"></i></span><span class="rail__label">GitHub<i data-icon="arrow-up-right" class="rail__ext"></i></span><span class="rail__tip" aria-hidden="true">GitHub</span></a></li>
+			<li style="--i:7"><a class="rail__link" href="{{ docsUrl }}" rel="noopener"><span class="rail__icon"><i data-icon="book-open"></i></span><span class="rail__label">Documentation<i data-icon="arrow-up-right" class="rail__ext"></i></span><span class="rail__tip" aria-hidden="true">Documentation</span></a></li>
+		</ul>
+	</nav>
+
+	<div class="rail__foot">
+		<a class="rail__status" href="/roadmap/#status" data-tip="v{{ venoraVersion }} · {{ phase }}">
+			<span class="status-dot" aria-hidden="true"></span>
+			<span class="rail__status-text"><span><strong>v{{ venoraVersion }}</strong> · {{ phase }}</span><small>In development</small></span>
+			<span class="visually-hidden">: project status</span>
+		</a>
+		<button class="rail__toggle" type="button" aria-controls="site-nav" aria-expanded="false" data-rail-toggle>
+			<span class="rail__icon">
+				<i data-icon="panel-left-open" class="rail__toggle-open"></i>
+				<i data-icon="panel-left-close" class="rail__toggle-close"></i>
+			</span>
+			<span class="rail__label" aria-hidden="true">Collapse <kbd>[</kbd></span>
+			<span class="rail__tip" aria-hidden="true">Expand <kbd>[</kbd></span>
+			<span class="visually-hidden" data-rail-toggle-label>Expand navigation</span>
+		</button>
+	</div>
+</aside>
+<div class="scrim" data-drawer-close hidden></div>

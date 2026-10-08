@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Venora: a plugin manager and plugin API for Fermo</title>
+	<meta name="description" content="Venora is an unofficial, open-source browser extension that adds a sandboxed plugin manager and a versioned plugin API to the Fermo web client.">
+	<meta property="og:title" content="Venora: a plugin manager and plugin API for Fermo">
+	<meta property="og:description" content="Extend Fermo with plugins that each run in their own sandbox and act only through permissions they declare.">
+	<!-- @include head -->
+</head>
+<body data-page="home">
+<!-- @include sidebar -->
+<div class="page">
+<main id="main">
+
+	<!-- Hero ------------------------------------------------------------------------------------------------- -->
+	<section class="hero" aria-labelledby="hero-title">
+		<div class="hero__orbit" aria-hidden="true"></div>
+		<div class="wrap hero__grid">
+			<div class="hero__copy">
+				<ul class="pills hero__pills" role="list" aria-label="Project facts">
+					<li class="pill pill--accent">Unofficial</li>
+					<li class="pill">Open source · GPLv3</li>
+					<li class="pill pill--ok"><span class="status-dot" aria-hidden="true"></span>In development · v{{ venoraVersion }}</li>
+				</ul>
+				<h1 id="hero-title" class="hero__title">
+					<span class="hero__name">Venora</span>
+					<span class="hero__tagline">A plugin manager and plugin API for&nbsp;Fermo.</span>
+				</h1>
+				<p class="lede hero__lede">Extend Fermo with plugins without handing each one the run of your client. Every plugin runs in its own sandbox and can only ask Venora to act, through permissions it declared up front.</p>
+				<div class="actions hero__actions">
+					<a class="btn btn--primary" href="/install/">Install Venora <i data-icon="arrow-right" class="icon--move"></i></a>
+					<a class="btn btn--ghost" href="{{ repoUrl }}" rel="noopener"><i data-icon="github"></i> View on GitHub</a>
+				</div>
+				<p class="hero__fine">
+					<a class="inline" href="{{ fermoUrl }}" rel="noopener">Fermo</a> is a third-party web client for Spacebar. Venora is an independent browser extension for the Fermo web client at <code>{{ fermoHost }}</code>. It is not made or endorsed by Fermo or Spacebar.
+				</p>
+			</div>
+
+			<figure class="flow frame" data-flow aria-labelledby="flow-caption">
+				<div class="flow__head">
+					<div class="flow__tabs" role="group" aria-label="Example requests">
+						<button class="flow__tab" type="button" aria-pressed="true" data-scenario="0">Allowed</button>
+						<button class="flow__tab" type="button" aria-pressed="false" data-scenario="1">No permission</button>
+						<button class="flow__tab" type="button" aria-pressed="false" data-scenario="2">Too many</button>
+						<button class="flow__tab" type="button" aria-pressed="false" data-scenario="3">Token</button>
+					</div>
+					<button class="flow__pause" type="button" aria-pressed="false" data-flow-pause>
+						<i data-icon="pause" class="flow__pause-icon"></i><i data-icon="play" class="flow__play-icon"></i>
+						<span class="visually-hidden">Pause the animation</span>
+					</button>
+				</div>
+				<div class="flow__call">
+					<span class="flow__who" data-flow-who>plugin declares <b>ui</b></span>
+					<code data-flow-call>await venora.ui.toast({ message: "Saved" })</code>
+				</div>
+				<ol class="flow__steps" role="list" data-flow-steps>
+					<li data-step="0"><span class="flow__node" aria-hidden="true"></span><span class="flow__text"><b>Plugin worker</b><span>Sandboxed. No DOM, no network, no extension APIs.</span></span></li>
+					<li data-step="1"><span class="flow__node" aria-hidden="true"></span><span class="flow__text"><b>Message bridge</b><span>Plugin identity comes from the private port, not the request.</span></span></li>
+					<li data-step="2"><span class="flow__node" aria-hidden="true"></span><span class="flow__text"><b>Capability exists</b><span data-flow-detail="2"><code>ui.toast</code> is in the fixed registry</span></span></li>
+					<li data-step="3"><span class="flow__node" aria-hidden="true"></span><span class="flow__text"><b>Permission declared</b><span data-flow-detail="3">needs <code>ui</code></span></span></li>
+					<li data-step="4"><span class="flow__node" aria-hidden="true"></span><span class="flow__text"><b>Payload valid</b><span data-flow-detail="4">plain text, at most 200 characters</span></span></li>
+					<li data-step="5"><span class="flow__node" aria-hidden="true"></span><span class="flow__text"><b>Within its rate limit</b><span data-flow-detail="5">5 at once, then 1 every 2 s</span></span></li>
+					<li data-step="6"><span class="flow__node" aria-hidden="true"></span><span class="flow__text"><b>Trusted service</b><span data-flow-detail="6">Venora draws the notice in its own UI</span></span></li>
+					<li data-step="7"><span class="flow__node" aria-hidden="true"></span><span class="flow__text"><b>Session-token guard</b><span>Every response is checked before it is sent.</span></span></li>
+				</ol>
+				<div class="flow__result" data-flow-result aria-live="polite"><span class="flow__result-label">Result</span><code>null</code><span>notice shown; an imported plugin's notice carries its name</span></div>
+				<figcaption id="flow-caption" class="flow__caption">How a plugin's call travels through Venora. The checks and their order are the ones in the API v1 specification.</figcaption>
+			</figure>
+		</div>
+	</section>
+
+	<!-- 01 What Venora does ------------------------------------------------------------------------------------ -->
+	<section class="section" aria-labelledby="what-title">
+		<div class="wrap">
+			<div class="section-head section-head--split">
+				<div data-reveal>
+					<p class="eyebrow"><b>01</b> What Venora does</p>
+					<h2 id="what-title" class="display">Plugins for Fermo, with a <em>boundary</em> around each one.</h2>
+				</div>
+				<p class="lede" data-reveal style="--d:1">Venora adds a <strong>Plugins</strong> page to Fermo's settings and a runtime that keeps plugin code apart from the client. Plugins get a small API instead of the whole page.</p>
+			</div>
+			<div class="cells" style="--cols:3">
+				<article class="cell" data-reveal>
+					<span class="cell__icon"><i data-icon="package"></i></span>
+					<h3>Manage plugins</h3>
+					<p>Install a plugin from a ZIP file, then enable, disable, configure, update or uninstall it from Fermo's settings.</p>
+				</article>
+				<article class="cell" data-reveal style="--d:1">
+					<span class="cell__icon"><i data-icon="layers"></i></span>
+					<h3>Run them apart</h3>
+					<p>Every plugin, bundled ones included, runs in a dedicated worker inside its own sandboxed frame. It has no direct access to Fermo's page, your storage or the network.</p>
+				</article>
+				<article class="cell" data-reveal style="--d:2">
+					<span class="cell__icon"><i data-icon="braces"></i></span>
+					<h3>Build on API v{{ apiVersion }}</h3>
+					<p>A small, versioned plugin API for notices, settings, storage, mention avatars and events. It is written down as a specification, and tests check the code against it.</p>
+				</article>
+			</div>
+		</div>
+	</section>
+
+	<!-- 02 Plugins --------------------------------------------------------------------------------------------- -->
+	<section class="section" aria-labelledby="plugins-title">
+		<div class="wrap">
+			<div class="section-head section-head--split">
+				<div data-reveal>
+					<p class="eyebrow"><b>02</b> Plugins</p>
+					<h2 id="plugins-title" class="display">From ZIP file to running, and back out again.</h2>
+				</div>
+				<p class="lede" data-reveal style="--d:1">Everything happens in <strong>Settings → Plugins</strong> inside Fermo. Nothing is stored until a plugin passes every check.</p>
+			</div>
+
+			<ol class="journey" role="list">
+				<li class="journey__step" data-reveal>
+					<span class="journey__num">1</span>
+					<h3><i data-icon="download"></i> Install</h3>
+					<p>Choose <b>Add plugin</b> and pick a ZIP. Venora validates the manifest, permissions, settings, compatibility and file sizes before anything is saved.</p>
+				</li>
+				<li class="journey__step" data-reveal style="--d:1">
+					<span class="journey__num">2</span>
+					<h3><i data-icon="key-round"></i> Review</h3>
+					<p>Every plugin's declared permissions are listed. If it asks for a sensitive one, you have to confirm a warning first.</p>
+				</li>
+				<li class="journey__step" data-reveal style="--d:2">
+					<span class="journey__num">3</span>
+					<h3><i data-icon="settings-2"></i> Configure</h3>
+					<p>Plugins can declare settings: switches, text, numbers and choices. Venora draws the settings dialog and only you can change the values.</p>
+				</li>
+				<li class="journey__step" data-reveal style="--d:3">
+					<span class="journey__num">4</span>
+					<h3><i data-icon="refresh-cw"></i> Update</h3>
+					<p>Add a newer ZIP of the same plugin. You see the old and new versions and the release notes, and your settings and data carry over.</p>
+				</li>
+				<li class="journey__step" data-reveal style="--d:4">
+					<span class="journey__num">5</span>
+					<h3><i data-icon="trash-2"></i> Remove</h3>
+					<p>Disable a plugin, or uninstall an imported one. Uninstalling deletes its files, settings and stored data.</p>
+				</li>
+			</ol>
+			<p class="journey__foot" data-reveal>Updates are manual for now. There is no plugin registry and Venora does not check for new versions. <a class="link-arrow" href="/features/">All plugin-management features <i data-icon="arrow-right"></i></a></p>
+		</div>
+	</section>
+
+	<!-- 03 Bundled plugins ------------------------------------------------------------------------------------- -->
+	<section class="section" aria-labelledby="bundled-title">
+		<div class="wrap">
+			<div class="section-head">
+				<div data-reveal>
+					<p class="eyebrow"><b>03</b> Built in</p>
+					<h2 id="bundled-title" class="display">Three plugins ship with Venora.</h2>
+					<p class="lede">They run in the same sandbox as any imported plugin, with only the permissions they declare.</p>
+				</div>
+			</div>
+			<div class="plugin-grid">
+				<article class="card plugin-card" data-reveal>
+					<div class="plugin-card__top"><span class="plugin-card__glyph"><i data-icon="at-sign"></i></span><span class="card__meta">mention-avatars · 1.2.0</span></div>
+					<h3>Mention avatars</h3>
+					<p>Shows the mentioned user's avatar beside their name, with an avatar-size setting. Venora looks the avatar up, so the plugin never receives your session token.</p>
+					<ul class="pills" role="list" aria-label="Permissions"><li class="tag">ui</li><li class="tag">storage</li><li class="tag tag--sensitive">account</li><li class="tag tag--sensitive">network</li></ul>
+				</article>
+				<article class="card plugin-card" data-reveal style="--d:1">
+					<div class="plugin-card__top"><span class="plugin-card__glyph"><i data-icon="wrench"></i></span><span class="card__meta">ui-fixes · 1.0.0 · required</span></div>
+					<h3>UI fixes</h3>
+					<p>Layout refinements that keep Fermo's account controls, search field and related elements aligned. It is CSS only, applied under the <code>ui</code> permission.</p>
+					<ul class="pills" role="list" aria-label="Permissions"><li class="tag">ui</li></ul>
+				</article>
+				<article class="card plugin-card" data-reveal style="--d:2">
+					<div class="plugin-card__top"><span class="plugin-card__glyph"><i data-icon="circle-check"></i></span><span class="card__meta">venora-status · 1.2.0 · required</span></div>
+					<h3>Venora status</h3>
+					<p>Briefly confirms that Venora is running when Fermo loads, using one <code>ui.toast</code> call.</p>
+					<ul class="pills" role="list" aria-label="Permissions"><li class="tag">ui</li></ul>
+				</article>
+			</div>
+		</div>
+	</section>
+
+	<!-- 04 Sandbox --------------------------------------------------------------------------------------------- -->
+	<section class="section" aria-labelledby="sandbox-title">
+		<div class="wrap split">
+			<div class="split__text">
+				<div data-reveal>
+					<p class="eyebrow"><b>04</b> Sandboxed by design</p>
+					<h2 id="sandbox-title" class="display">Plugin code runs several layers away from&nbsp;Fermo.</h2>
+				</div>
+				<div class="prose" data-reveal style="--d:1">
+					<p>Each plugin gets its own sandboxed extension frame with an opaque origin and a content security policy of <code>default-src 'none'</code>. Inside it, the plugin runs in a dedicated worker with no <code>window</code>, <code>document</code> or navigable location.</p>
+					<p>The plugin reaches Venora through a private message port. Only copies of plain data cross it. Venora decides which plugin is asking from the port a request arrives on, never from the request itself.</p>
+				</div>
+				<p data-reveal style="--d:2"><a class="link-arrow" href="/security/">How the sandbox works <i data-icon="arrow-right"></i></a></p>
+			</div>
+			<div class="layers frame" data-reveal style="--d:1" role="img" aria-label="Nested layers. From the outside in: Fermo's page; Venora's trusted content script; a closed shadow root; a sandboxed frame with an opaque origin and no network; a dedicated worker with no DOM; and the plugin module at the centre.">
+				<div class="layer" style="--n:0"><span class="layer__label"><i data-icon="globe"></i>Fermo's page · {{ fermoHost }}</span>
+					<div class="layer" style="--n:1"><span class="layer__label"><i data-icon="shield"></i>Venora content script · trusted</span>
+						<div class="layer" style="--n:2"><span class="layer__label"><i data-icon="eye-off"></i>Closed shadow root</span>
+							<div class="layer" style="--n:3"><span class="layer__label"><i data-icon="box"></i>Sandboxed frame · opaque origin · no network</span>
+								<div class="layer" style="--n:4"><span class="layer__label"><i data-icon="cpu"></i>Dedicated worker · no DOM</span>
+									<div class="layer layer--core" style="--n:5"><i data-icon="puzzle"></i><span>your plugin</span></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- 05 Permissions ----------------------------------------------------------------------------------------- -->
+	<section class="section" aria-labelledby="perm-title">
+		<div class="wrap">
+			<div class="section-head section-head--split">
+				<div data-reveal>
+					<p class="eyebrow"><b>05</b> Permissions</p>
+					<h2 id="perm-title" class="display">Declared up front. Checked on every&nbsp;call.</h2>
+				</div>
+				<p class="lede" data-reveal style="--d:1">A plugin lists its permissions in <code>plugin.json</code>. They are fixed for that version, and every request is checked against them. A missing permission means <code>permission_denied</code>, whatever the plugin sends.</p>
+			</div>
+			<div class="perm-list" role="list">
+				<div class="perm" role="listitem" data-reveal><code class="perm__id">storage</code><div><h3>Storage</h3><p>Read its own settings, and keep its own data in a private store.</p></div><span class="pill">Standard</span></div>
+				<div class="perm" role="listitem" data-reveal style="--d:1"><code class="perm__id">ui</code><div><h3>Interface changes</h3><p>Show short notices, apply its declared CSS, and decorate mentions with avatars.</p></div><span class="pill">Standard</span></div>
+				<div class="perm perm--sensitive" role="listitem" data-reveal style="--d:2"><code class="perm__id">network</code><div><h3>Network access</h3><p>Lets Venora make a web request <em>on the plugin's behalf</em>, inside a capability that needs it. The plugin cannot send its own requests.</p></div><span class="pill pill--warn"><i data-icon="triangle-alert"></i>Sensitive</span></div>
+				<div class="perm perm--sensitive" role="listitem" data-reveal style="--d:3"><code class="perm__id">account</code><div><h3>Fermo account access</h3><p>Lets Venora use your signed-in account <em>on the plugin's behalf</em>. The plugin never receives the token or your account record.</p></div><span class="pill pill--warn"><i data-icon="triangle-alert"></i>Sensitive</span></div>
+			</div>
+			<div class="note perm-note" data-reveal>
+				<i data-icon="info"></i>
+				<p>Sensitive permissions must be confirmed in a warning at install, and again at every update that declares them. In API v1 they are consent markers: no capability gives a plugin general network access or your account data. Today they unlock only the avatar lookup.</p>
+			</div>
+		</div>
+	</section>
+
+	<!-- 06 Token ---------------------------------------------------------------------------------------------- -->
+	<section class="section token" aria-labelledby="token-title">
+		<div class="wrap split split--reverse">
+			<div class="split__text">
+				<div data-reveal>
+					<p class="eyebrow"><b>06</b> Session token</p>
+					<h2 id="token-title" class="display">Your token stays yours.</h2>
+				</div>
+				<div class="prose" data-reveal style="--d:1">
+					<p>Some things need your Fermo session, such as looking up an avatar. Venora does that work itself, inside its trusted code, and gives the plugin only the outcome: <code>{shown: true}</code>, not the avatar URL and never the token.</p>
+					<p>As a backstop, every message Venora sends to a plugin passes through one function that checks it against your current session tokens, for every Fermo account in the browser profile. A response containing a token becomes <code>sensitive_data_blocked</code>. An event containing one is dropped. If the tokens cannot be read, nothing is sent.</p>
+				</div>
+			</div>
+			<div class="token-diagram frame" data-reveal style="--d:1" role="img" aria-label="Two layers of protection. First, capabilities use the token inside Venora and return only a derived result. Second, a guard checks every outgoing message for the token, blocks responses that contain it, and drops events that contain it.">
+				<div class="token-row">
+					<span class="token-row__n">1</span>
+					<div><b>Capabilities return only what plugins need</b><span><code>mentions.showAvatar</code> uses the session, if needed, for one request to your Spacebar server, then returns <code>{shown}</code>.</span></div>
+				</div>
+				<div class="token-row">
+					<span class="token-row__n">2</span>
+					<div><b>One send path, checked every time</b><span>Responses, events, settings, storage reads and errors all pass the guard. It fails closed.</span></div>
+				</div>
+				<div class="token-out">
+					<span class="token-out__item token-out__item--ok"><i data-icon="circle-check"></i><code>{ shown: true }</code></span>
+					<span class="token-out__item token-out__item--blocked"><i data-icon="ban"></i><code>sensitive_data_blocked</code></span>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- 07 Runtime protection ---------------------------------------------------------------------------------- -->
+	<section class="section" aria-labelledby="runtime-title">
+		<div class="wrap">
+			<div class="section-head section-head--split">
+				<div data-reveal>
+					<p class="eyebrow"><b>07</b> Runtime protection</p>
+					<h2 id="runtime-title" class="display">One misbehaving plugin shouldn't take the rest down.</h2>
+				</div>
+				<p class="lede" data-reveal style="--d:1">Each running plugin has its own resource account. These are the limits Venora enforces today, taken from the API v1 specification.</p>
+			</div>
+			<div class="limits">
+				<div class="limit" data-reveal><span class="limit__value">64</span><span class="limit__label">requests waiting for an answer, per plugin</span></div>
+				<div class="limit" data-reveal style="--d:1"><span class="limit__value">120<small> then 60/s</small></span><span class="limit__label">requests at once, then a steady rate. Over that: <code>rate_limited</code></span></div>
+				<div class="limit" data-reveal style="--d:2"><span class="limit__value">30 s</span><span class="limit__label">before an unanswered capability times out and frees its slot</span></div>
+				<div class="limit" data-reveal style="--d:3"><span class="limit__value">2 s · 5 s</span><span class="limit__label">watchdog: a ping every 2 s, and a plugin that hasn't answered in 5 s is stopped</span></div>
+				<div class="limit" data-reveal><span class="limit__value">100<small> then 50/s</small></span><span class="limit__label">events delivered to a plugin. Events over that are dropped</span></div>
+				<div class="limit" data-reveal style="--d:1"><span class="limit__value">1M<small> chars</small></span><span class="limit__label">of strings and keys per message, and 50,000 values. A larger message stops the plugin</span></div>
+				<div class="limit" data-reveal style="--d:2"><span class="limit__value">1 MiB</span><span class="limit__label">of storage per plugin: up to 1,000 keys, 64 KiB per value</span></div>
+				<div class="limit" data-reveal style="--d:3"><span class="limit__value">3 strikes</span><span class="limit__label">stopped for misbehaviour 3 times, a plugin stays off until the page reloads</span></div>
+			</div>
+			<div class="runtime-foot">
+				<div class="note" data-reveal>
+					<i data-icon="life-buoy"></i>
+					<p><strong>Safe mode and recovery.</strong> If a plugin makes Fermo hard to use, click the Venora button in the browser toolbar. That menu is outside Fermo's page, so plugin CSS cannot hide it. Turn on safe mode to stop every imported plugin, or disable or uninstall one. Open Fermo tabs apply the change at once.</p>
+				</div>
+				<div class="note note--warn" data-reveal style="--d:1">
+					<i data-icon="cpu"></i>
+					<p><strong>What isn't capped.</strong> Browsers give extensions no way to limit one worker's CPU time or memory. The watchdog stops plugins that stop responding, but a plugin that stays responsive can still use CPU and memory in its own worker.</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- 08 Developers ------------------------------------------------------------------------------------------ -->
+	<section class="section" aria-labelledby="dev-title">
+		<div class="wrap split split--code">
+			<div class="split__text">
+				<div data-reveal>
+					<p class="eyebrow"><b>08</b> Developer API</p>
+					<h2 id="dev-title" class="display">A plugin is a manifest and one ES&nbsp;module.</h2>
+				</div>
+				<p class="lede" data-reveal style="--d:1">Your default export receives a frozen <code>venora</code> object. Every method returns a promise, takes one plain object, and maps to exactly one permission-checked capability.</p>
+				<ul class="api-list" role="list" data-reveal style="--d:2">
+					<li><code>venora.ui</code><span>Short plain-text notices</span></li>
+					<li><code>venora.settings</code><span>Read your declared settings</span></li>
+					<li><code>venora.storage</code><span>Your own key–value data</span></li>
+					<li><code>venora.mentions</code><span>Avatars beside @mentions</span></li>
+					<li><code>venora.on</code><span><code>settings.changed</code>, <code>mentions.added</code></span></li>
+				</ul>
+				<div class="actions" data-reveal style="--d:3">
+					<a class="btn btn--ghost btn--small" href="/developers/">Developer guide <i data-icon="arrow-right" class="icon--move"></i></a>
+					<a class="link-arrow" href="{{ doc:plugin-api.md }}" rel="noopener">API v{{ apiVersion }} specification <i data-icon="arrow-up-right"></i></a>
+				</div>
+			</div>
+			<div class="code tabs" data-tabs data-reveal style="--d:1">
+				<div class="tabs__list" role="tablist" aria-label="Example plugin files">
+					<button class="tabs__tab" role="tab" type="button" id="tab-js" aria-controls="panel-js" aria-selected="true"><i data-icon="file-code"></i>index.js</button>
+					<button class="tabs__tab" role="tab" type="button" id="tab-json" aria-controls="panel-json" aria-selected="false" tabindex="-1"><i data-icon="file-json"></i>plugin.json</button>
+				</div>
+				<div class="tabs__panel" role="tabpanel" id="panel-js" aria-labelledby="tab-js">
+<pre tabindex="0"><code class="language-js">export default async (venora) => {
+  const greeting = await venora.settings.get({key: "greeting"});
+  await venora.ui.toast({message: greeting});
+
+  const unsubscribe = await venora.on("settings.changed", ({key, value}) => {
+    if (key === "greeting") venora.ui.toast({message: value});
+  });
+
+  // Data the plugin keeps for itself, separate from the user's settings.
+  const runs = ((await venora.storage.get({key: "runs"})) ?? 0) + 1;
+  await venora.storage.set({key: "runs", value: runs});
+
+  return () => {
+    // Cleanup. Venora removes what it added to the page for this plugin.
+    unsubscribe();
+  };
+};</code></pre>
+				</div>
+				<div class="tabs__panel" role="tabpanel" id="panel-json" aria-labelledby="tab-json" hidden>
+<pre tabindex="0"><code class="language-json">{
+  "id": "greeter",
+  "name": "Greeter",
+  "version": "1.0.0",
+  "author": "Your name",
+  "main": "index.js",
+  "permissions": ["storage", "ui"],
+  "compatibility": {"apiVersion": 1, "minVenoraVersion": "0.1.0"},
+  "settings": [
+    {"key": "greeting", "type": "string", "default": "Hello!"}
+  ]
+}</code></pre>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- 09 Open source & status --------------------------------------------------------------------------------- -->
+	<section class="section" aria-labelledby="oss-title">
+		<div class="wrap duo">
+			<div class="duo__item" data-reveal>
+				<p class="eyebrow"><b>09</b> Open source</p>
+				<h2 id="oss-title" class="display display--sm">Free software under GPLv3.</h2>
+				<p class="prose">Venora and its bundled plugins are licensed under the GNU General Public License, version 3. You can read, run, study, change and share the code. The repository holds the extension, the API specification, the security requirements and the test suite.</p>
+				<div class="actions">
+					<a class="btn btn--ghost btn--small" href="{{ repoUrl }}" rel="noopener"><i data-icon="github"></i> Repository</a>
+					<a class="link-arrow" href="{{ licenseUrl }}" rel="noopener">License <i data-icon="arrow-up-right"></i></a>
+				</div>
+			</div>
+			<div class="duo__item status-card frame" data-reveal style="--d:1">
+				<p class="eyebrow"><b>10</b> Status</p>
+				<h2 class="display display--sm">Actively being built.</h2>
+				<p class="prose">The plugin runtime and API v{{ apiVersion }} are implemented and tested in Chromium. Work now focuses on browser support, developer experience, documentation and distribution. There are no store releases yet.</p>
+				<div class="phase-bar" aria-hidden="true"><span class="is-done">1</span><span class="is-done">2</span><span class="is-now">3</span><span>4</span><span>5</span></div>
+				<p class="status-card__meta">Version {{ venoraVersion }} · {{ phase }} · <a class="inline" href="/roadmap/">Roadmap</a></p>
+			</div>
+		</div>
+	</section>
+
+	<!-- Closing ----------------------------------------------------------------------------------------------- -->
+	<section class="section section--tight closing" aria-labelledby="closing-title">
+		<div class="wrap">
+			<div class="closing__inner" data-reveal>
+				<div>
+					<p class="eyebrow">Try it</p>
+					<h2 id="closing-title" class="display">Load Venora into your browser in a few minutes.</h2>
+					<p class="lede">Venora installs from source in developer mode on Chromium-based desktop browsers. The install guide walks through it step by step.</p>
+				</div>
+				<div class="actions">
+					<a class="btn btn--primary" href="/install/">Install guide <i data-icon="arrow-right" class="icon--move"></i></a>
+				</div>
+			</div>
+		</div>
+	</section>
+
+</main>
+<!-- @include footer -->
+</div>
+</body>
+</html>

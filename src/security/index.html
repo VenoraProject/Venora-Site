@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Security &amp; privacy · Venora</title>
+	<meta name="description" content="How Venora isolates plugins: sandboxed workers, permission-checked capabilities, session-token protection, resource limits, recovery, and what Venora does with your data. Including its current limitations.">
+	<meta property="og:title" content="Security &amp; privacy · Venora">
+	<!-- @include head -->
+</head>
+<body data-page="security">
+<!-- @include sidebar -->
+<div class="page">
+<main id="main">
+
+	<header class="page-hero">
+		<div class="wrap">
+			<p class="eyebrow" data-reveal>Security &amp; privacy</p>
+			<h1 data-reveal style="--d:1">Less trust, <em>by design.</em></h1>
+			<p class="lede" data-reveal style="--d:2">Venora is designed to reduce the trust and privilege a plugin needs, rather than treating every plugin as fully trusted code. This page explains how it does that, what it stores, and where its protections stop.</p>
+			<ul class="pills" role="list" data-reveal style="--d:3">
+				<li class="pill pill--accent"><i data-icon="scroll-text"></i>Written requirements: SEC-1 to SEC-13</li>
+				<li class="pill pill--ok"><i data-icon="circle-check"></i>Tested in Chromium</li>
+				<li class="pill pill--warn"><i data-icon="info"></i>No independent audit published</li>
+			</ul>
+		</div>
+	</header>
+
+	<!-- Trust model -->
+	<section class="section section--tight" aria-labelledby="trust-title">
+		<div class="wrap">
+			<div class="section-head section-head--split">
+				<div data-reveal>
+					<p class="eyebrow"><b>01</b> Trust model</p>
+					<h2 id="trust-title" class="display">Who trusts what.</h2>
+				</div>
+				<p class="lede" data-reveal style="--d:1">The trust boundary is each plugin's sandboxed frame and its message channel. Inside, the plugin controls everything. Outside, Venora validates everything that crosses.</p>
+			</div>
+			<div class="cells" style="--cols:3">
+				<article class="cell" data-reveal>
+					<span class="cell__icon"><i data-icon="shield"></i></span>
+					<h3>Venora is trusted code</h3>
+					<p>When you install the extension, you trust it. It runs inside Fermo's page and can read that page and Fermo's local account data, which it needs in order to guard your token and to do work on plugins' behalf.</p>
+				</article>
+				<article class="cell" data-reveal style="--d:1">
+					<span class="cell__icon"><i data-icon="puzzle"></i></span>
+					<h3>Plugins are untrusted</h3>
+					<p>Imported plugin code and manifests are treated as untrusted. Bundled plugins get no exceptions: they run in the same sandbox, with only the permissions they declare.</p>
+				</article>
+				<article class="cell" data-reveal style="--d:2">
+					<span class="cell__icon"><i data-icon="globe"></i></span>
+					<h3>The page isn't trusted with the channel</h3>
+					<p>Plugin frames sit inside a closed shadow root, and each private channel is handed over once with a random nonce. Fermo's own scripts cannot obtain a plugin's channel.</p>
+				</article>
+			</div>
+		</div>
+	</section>
+
+	<!-- Architecture walk-through -->
+	<section class="section" aria-labelledby="arch-title">
+		<div class="wrap">
+			<div class="section-head" data-reveal>
+				<p class="eyebrow"><b>02</b> Architecture</p>
+				<h2 id="arch-title" class="display">Follow a plugin outward.</h2>
+				<p class="lede">Each layer removes something a plugin could otherwise reach. Scroll through them in order, from the plugin's own code out to the browser toolbar.</p>
+			</div>
+
+			<div class="scrolly" data-scrolly>
+				<div class="scrolly__diagram" aria-hidden="true">
+					<div class="arch frame" data-scrolly-diagram>
+						<div class="arch__box arch__page" data-part="page">
+							<span class="arch__label"><i data-icon="globe"></i>Fermo's page · top-level · {{ fermoHost }}/channels/…</span>
+							<div class="arch__box arch__venora" data-part="venora">
+								<span class="arch__label"><i data-icon="shield"></i>Venora content script · trusted</span>
+								<div class="arch__services">
+									<span class="arch__chip" data-part="dispatch"><i data-icon="key-round"></i>Capability dispatch</span>
+									<span class="arch__chip" data-part="guard"><i data-icon="fingerprint"></i>Token guard</span>
+									<span class="arch__chip" data-part="governor"><i data-icon="gauge"></i>Resource account</span>
+									<span class="arch__chip" data-part="ui"><i data-icon="eye-off"></i>Venora UI · shadow roots</span>
+								</div>
+								<div class="arch__port" data-part="port"><span>MessagePort · plain data · identity bound</span></div>
+								<div class="arch__box arch__shadow" data-part="shadow">
+									<span class="arch__label"><i data-icon="lock"></i>Closed shadow root</span>
+									<div class="arch__box arch__frame" data-part="frame">
+										<span class="arch__label"><i data-icon="box"></i>Sandboxed frame · opaque origin · CSP default-src 'none'</span>
+										<div class="arch__box arch__worker" data-part="worker">
+											<span class="arch__label"><i data-icon="cpu"></i>Dedicated worker · no DOM</span>
+											<div class="arch__plugin"><i data-icon="puzzle"></i>plugin module</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="arch__box arch__popup" data-part="popup">
+							<span class="arch__label"><i data-icon="life-buoy"></i>Browser toolbar · Venora popup · outside the page</span>
+						</div>
+					</div>
+				</div>
+
+				<ol class="scrolly__steps" role="list">
+					<li class="scrolly__step" data-focus="worker">
+						<span class="scrolly__n">01</span>
+						<h3>The plugin runs in a dedicated worker</h3>
+						<p>Plugin code has no <code>window</code>, <code>document</code>, <code>parent</code> or assignable <code>location</code>. It cannot touch any DOM, and it cannot navigate a frame to smuggle data out in a URL.</p>
+						<p>It gets the standard JavaScript built-ins, timers, <code>console</code> and a few web-platform basics. <code>eval</code> and <code>new Function</code> are blocked. The code is a single ES module loaded from a <code>data:</code> URL.</p>
+					</li>
+					<li class="scrolly__step" data-focus="frame">
+						<span class="scrolly__n">02</span>
+						<h3>Inside a sandboxed extension frame</h3>
+						<p>The worker is created by a sandboxed extension page with an opaque origin and no <code>chrome.*</code> APIs. Its content security policy is <code>default-src 'none'</code>, so <code>fetch</code>, XHR, WebSocket and loading images, scripts or frames are blocked. The worker inherits this policy, which the browser test confirms in Chromium.</p>
+						<p>An opaque origin also means no access to Fermo's <code>localStorage</code>, IndexedDB or cookies, which is where Fermo keeps your session.</p>
+					</li>
+					<li class="scrolly__step" data-focus="shadow port">
+						<span class="scrolly__n">03</span>
+						<h3>One private channel per plugin</h3>
+						<p>Frames sit in a closed shadow root. At start, Venora posts a connect message with a random 128-bit nonce and one transferred <code>MessagePort</code>. The sandbox accepts exactly one, and only from its parent.</p>
+						<p>Venora decides which plugin is asking from the port a request arrives on. A request that includes a plugin ID is rejected. Only plain, JSON-compatible data can cross, within size limits.</p>
+					</li>
+					<li class="scrolly__step" data-focus="dispatch">
+						<span class="scrolly__n">04</span>
+						<h3>Every privileged operation is a capability</h3>
+						<p>The registry is fixed at load. The dispatcher checks that the capability exists, that every permission it needs was declared, and that the payload is valid, in that order. Permissions are copied from the validated install record when the plugin starts, so nothing the plugin sends can change them.</p>
+						<p>Internal exceptions come back only as a generic <code>capability_failed</code>. Stack traces, paths and server responses are never passed to the plugin.</p>
+					</li>
+					<li class="scrolly__step" data-focus="guard">
+						<span class="scrolly__n">05</span>
+						<h3>The session token is never sent</h3>
+						<p>Capabilities that need your session use it inside Venora and return only a derived result. Then, as a backstop, every message to a plugin passes through one function that checks it against your current tokens, for every Fermo account in the profile, including inside longer strings.</p>
+						<p>A response containing a token becomes <code>sensitive_data_blocked</code>. An event containing one is dropped. If the tokens can't be read, nothing is sent. The guard never logs the token.</p>
+					</li>
+					<li class="scrolly__step" data-focus="governor">
+						<span class="scrolly__n">06</span>
+						<h3>Each plugin has its own resource account</h3>
+						<p>Requests waiting for an answer, request rate, each costly capability's rate and event rate are all counted per plugin. Over a limit, requests are refused with <code>rate_limited</code> before any work is done.</p>
+						<p>A watchdog pings each worker every 2 seconds and stops one that hasn't answered within 5, removing its frame and worker.</p>
+					</li>
+					<li class="scrolly__step" data-focus="ui">
+						<span class="scrolly__n">07</span>
+						<h3>Venora's own UI is out of reach</h3>
+						<p>Dialogs, notices and the Plugins page render in shadow roots on hosts with inline <code>!important</code> styles, and dialogs and notices use the browser's top layer. Plugin CSS cannot restyle, hide or cover them.</p>
+						<p>Every plugin-provided string is rendered as text, never HTML. Imported plugins' notices carry a fixed “Plugin” badge and the plugin's name, so a plugin calling itself “Venora” still can't pose as Venora.</p>
+					</li>
+					<li class="scrolly__step" data-focus="page">
+						<span class="scrolly__n">08</span>
+						<h3>Only on Fermo's own page</h3>
+						<p>Venora runs only in Fermo's top-level page at <code>{{ fermoHost }}</code>. It never runs in a framed copy of Fermo or on a look-alike origin. Plugins run on <code>/channels/</code> pages, and the page context is checked again before every start, request and event.</p>
+						<p>If Fermo leaves <code>/channels/</code> or its document is replaced, requests are refused with <code>runtime_stopped</code> and the plugins are stopped.</p>
+					</li>
+					<li class="scrolly__step" data-focus="popup">
+						<span class="scrolly__n">09</span>
+						<h3>A way back that plugins can't hide</h3>
+						<p>Plugin CSS can restyle Fermo's own page, including the settings area. So recovery lives in the Venora toolbar popup, an extension page that no plugin CSS can reach. From it you can turn on safe mode, which stops every imported plugin, or enable, disable and uninstall plugins. Open Fermo tabs apply the change at once.</p>
+					</li>
+				</ol>
+			</div>
+		</div>
+	</section>
+
+	<!-- Reference -->
+	<section class="section" aria-label="Security reference">
+		<div class="wrap with-toc">
+			<div>
+				<section class="doc-section" id="permissions" aria-labelledby="h-permissions">
+					<p class="eyebrow"><b>03</b> Permissions</p>
+					<h2 id="h-permissions">Permissions and consent</h2>
+					<div class="prose">
+						<p>A permission is consent. On its own it grants nothing. It matters only because capabilities and events require it. Permissions come from <code>plugin.json</code>, are fixed for each installed version, and are checked on every call. An unknown permission blocks installation.</p>
+					</div>
+					<div class="table-wrap">
+						<table>
+							<thead><tr><th scope="col">Permission</th><th scope="col">Lets the plugin cause</th><th scope="col">Never gives the plugin</th></tr></thead>
+							<tbody>
+								<tr><td><code>storage</code></td><td>Reading its own settings and storing its own data</td><td>Other plugins' settings or data; Venora's or Fermo's storage</td></tr>
+								<tr><td><code>ui</code></td><td>Notices, its declared CSS, mention avatars, the <code>mentions.added</code> event</td><td>Direct DOM access; page content beyond what an event reports; any change to Venora's UI</td></tr>
+								<tr><td><code>network</code> <span class="tag tag--sensitive">sensitive</span></td><td>Venora making web requests on its behalf, inside capabilities that require it</td><td>A way to send its own requests, or to see responses beyond what the capability returns</td></tr>
+								<tr><td><code>account</code> <span class="tag tag--sensitive">sensitive</span></td><td>Venora acting with your signed-in Fermo account on its behalf</td><td>The session token, the account record, credentials, or profile data</td></tr>
+							</tbody>
+						</table>
+					</div>
+					<h3>Sensitive-permission confirmation</h3>
+					<div class="prose">
+						<p>A permission is sensitive if it lets a plugin cause Venora to act on your behalf, send data off the device, or use your identity. Before installing, and before every update that declares one, Venora shows a warning listing them in its own top-layer dialog, and the plugin is stored only if you confirm. Anything that can't ask you fails closed.</p>
+						<p>In API v1, <code>network</code> and <code>account</code> are consent markers. No capability performs arbitrary requests or returns account data. They are needed only for the avatar lookup.</p>
+					</div>
+					<h3>Validated before anything is stored</h3>
+					<div class="prose">
+						<p>An imported ZIP is checked in full: structure and paths, the manifest, version, permissions, compatibility, changelog, settings, and file sizes. If anything fails, nothing is saved. Fields that only Venora may set, such as <code>required</code> and <code>enabled</code>, are stripped from imported manifests, so a third-party plugin cannot make itself impossible to disable.</p>
+					</div>
+				</section>
+
+				<section class="doc-section" id="storage" aria-labelledby="h-storage">
+					<p class="eyebrow"><b>04</b> Storage isolation</p>
+					<h2 id="h-storage">One plugin, its own data</h2>
+					<div class="prose">
+						<p>Settings and storage are addressed by the plugin ID Venora bound to the running plugin. No method takes a plugin ID, and there is no way to list keys or other plugins. A plugin can't read, write or detect another plugin's settings or storage, or even tell whether that plugin exists.</p>
+						<p>Each plugin's data is one entry in extension storage, separate from Venora's own records and from Fermo's storage, with quotas checked before every write. Uninstalling an imported plugin deletes its data.</p>
+					</div>
+				</section>
+
+				<section class="doc-section" id="limits" aria-labelledby="h-limits">
+					<p class="eyebrow"><b>05</b> Runtime limits</p>
+					<h2 id="h-limits">Resource limits, watchdog and failures</h2>
+					<div class="table-wrap">
+						<table>
+							<thead><tr><th scope="col">Resource</th><th scope="col">Limit</th><th scope="col">When exceeded</th></tr></thead>
+							<tbody>
+								<tr><td>Requests waiting for an answer</td><td>64 per plugin</td><td><code>rate_limited</code>; nothing is done</td></tr>
+								<tr><td>Requests, all capabilities</td><td>120 at once, refilled at 60 per second</td><td><code>rate_limited</code></td></tr>
+								<tr><td>Costly capabilities</td><td>Their own limit, e.g. <code>ui.toast</code>: 5 at once, then 1 every 2 s</td><td><code>rate_limited</code></td></tr>
+								<tr><td>Events to a plugin</td><td>100 at once, refilled at 50 per second</td><td>Event dropped</td></tr>
+								<tr><td>One message</td><td>50,000 values; 1,000,000 characters of strings and keys</td><td>Plugin stopped</td></tr>
+								<tr><td>Unanswered capability</td><td>30 seconds</td><td><code>timeout</code>; slot freed</td></tr>
+								<tr><td>Unresponsive worker</td><td>Pinged every 2 s; no answer within 5 s</td><td>Plugin stopped; frame and worker removed</td></tr>
+								<tr><td>Startup / cleanup</td><td>10 seconds / 2 seconds</td><td>Failed / frame removed anyway</td></tr>
+								<tr><td>Sustained rejections</td><td>More than 200 <code>rate_limited</code> in 10 s</td><td>Plugin stopped</td></tr>
+								<tr><td>Repeated problems</td><td>3 stops for misbehaviour on one page</td><td>Not restarted until reload</td></tr>
+								<tr><td>Storage</td><td>64 KiB per value; 1 MiB and 1,000 keys per plugin</td><td><code>quota_exceeded</code></td></tr>
+								<tr><td>Install</td><td>ZIP 16 MiB; manifest and CSS 131,072 characters; entry script 2,000,000</td><td>Not installed</td></tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="prose" style="margin-top:24px">
+						<p>One plugin's failure doesn't stop another: accounts are per plugin, and a failed plugin's frame and page additions are removed while the others keep running.</p>
+					</div>
+				</section>
+
+				<section class="doc-section" id="recovery" aria-labelledby="h-recovery">
+					<p class="eyebrow"><b>06</b> Recovery</p>
+					<h2 id="h-recovery">Safe mode and the toolbar popup</h2>
+					<div class="split-list">
+						<div class="yes">
+							<h3><i data-icon="life-buoy"></i>Safe mode</h3>
+							<ul role="list">
+								<li><i data-icon="check"></i>Stops every <strong>imported</strong> plugin and removes its CSS, without a reload</li>
+								<li><i data-icon="check"></i>Available on the Plugins page and in the toolbar popup</li>
+								<li><i data-icon="check"></i>Plugins bundled with Venora keep running</li>
+							</ul>
+						</div>
+						<div class="yes">
+							<h3><i data-icon="toggle-right"></i>Toolbar popup</h3>
+							<ul role="list">
+								<li><i data-icon="check"></i>An extension page outside Fermo, so no plugin CSS applies</li>
+								<li><i data-icon="check"></i>Enable or disable any optional plugin</li>
+								<li><i data-icon="check"></i>Uninstall imported plugins, with a second click to confirm</li>
+							</ul>
+						</div>
+					</div>
+				</section>
+
+				<section class="doc-section" id="privacy" aria-labelledby="h-privacy">
+					<p class="eyebrow"><b>07</b> Privacy</p>
+					<h2 id="h-privacy">What Venora does with your data</h2>
+					<div class="prose">
+						<p>Venora has no server and no account system. Its code contains no analytics or telemetry, and it syncs nothing. Here is what each party can see and keep.</p>
+					</div>
+					<div class="privacy-grid">
+						<div class="privacy-item">
+							<h3><i data-icon="shield"></i>What Venora itself accesses</h3>
+							<p>The extension asks the browser for <code>storage</code> and for access to <code>https://{{ fermoHost }}/*</code> only. In Fermo's page it reads the page to find mentions, and Fermo's local account data to guard your token and to look up avatars.</p>
+						</div>
+						<div class="privacy-item">
+							<h3><i data-icon="puzzle"></i>What a plugin can access</h3>
+							<p>Only what capabilities return: its own settings and storage, and, with <code>ui</code>, the opaque IDs of mentions on the page with the mentioned users' public user IDs. Avatar requests return only whether an avatar was shown.</p>
+						</div>
+						<div class="privacy-item">
+							<h3><i data-icon="hard-drive"></i>What is stored locally</h3>
+							<p>In this browser profile's extension storage: imported plugin files and manifests, which plugins are enabled, safe mode, plugin settings, and each plugin's own storage. It is not synced between devices, and it is shared by every Fermo account used in that profile.</p>
+						</div>
+						<div class="privacy-item">
+							<h3><i data-icon="radio"></i>What leaves your browser</h3>
+							<p>Nothing goes to Venora. When a plugin with the <code>ui</code>, <code>account</code> and <code>network</code> permissions shows a mention avatar, as the bundled Mention avatars plugin does, Venora may request that user's profile from the Spacebar server your Fermo account uses, and the avatar image loads from that server.</p>
+						</div>
+					</div>
+					<p class="privacy-foot">This website has no analytics, sets no cookies, and serves its fonts itself.</p>
+				</section>
+
+				<section class="doc-section" id="limitations" aria-labelledby="h-limitations">
+					<p class="eyebrow"><b>08</b> Current limitations</p>
+					<h2 id="h-limitations">Where the protections stop</h2>
+					<div class="prose">
+						<p>These are known, documented gaps. Venora would rather list them than leave them for you to discover.</p>
+					</div>
+					<ul class="limitations" role="list">
+						<li><i data-icon="cpu"></i><div><strong>CPU and memory aren't capped.</strong> Browsers give extensions no per-worker quota. The watchdog stops plugins that stop responding, but a plugin that stays responsive can still use CPU and memory in its own worker. Whether the frame runs in a separate process depends on the browser's site isolation.</div></li>
+						<li><i data-icon="palette"></i><div><strong>Plugin CSS can change Fermo's page.</strong> With <code>ui</code>, CSS can restyle or hide parts of Fermo, including the settings area. It can't load resources, write text, or reach Venora's UI or the popup, and safe mode removes it at once.</div></li>
+						<li><i data-icon="monitor"></i><div><strong>Chromium only, and not every browser is tested.</strong> The automated browser test runs in Chromium (Microsoft Edge). Firefox has not been verified, and the sandbox must not be used there until its no-network behaviour is confirmed.</div></li>
+						<li><i data-icon="flask-conical"></i><div><strong>The automated test uses a stand-in page.</strong> It serves a page with Fermo's production security policy on Fermo's real origin. Fermo's own DOM, routing and account data are covered only by the manual test.</div></li>
+						<li><i data-icon="database"></i><div><strong>Storage is per browser profile.</strong> Plugin data is shared by every Fermo account in the profile. Writes made at the same moment from two tabs can lose one tab's change.</div></li>
+						<li><i data-icon="ban"></i><div><strong>Fermo's page can stop a plugin from starting.</strong> It can see that plugin frames exist and post messages to them. It can't read the nonce or the port, but a forged connect message sent first would prevent that plugin from starting.</div></li>
+						<li><i data-icon="badge-check"></i><div><strong>No publisher verification.</strong> There is no plugin registry or signing. When you install a ZIP, you are trusting whoever gave it to you to the extent of the permissions it declares.</div></li>
+						<li><i data-icon="scroll-text"></i><div><strong>No independent audit.</strong> The protections are specified, tested, and checked by turning each one off to confirm a test fails. No external security audit has been published.</div></li>
+					</ul>
+				</section>
+
+				<section class="doc-section" id="verify" aria-labelledby="h-verify">
+					<p class="eyebrow"><b>09</b> Verify it yourself</p>
+					<h2 id="h-verify">Read the requirements, run the tests</h2>
+					<div class="prose">
+						<p>The security requirements are normative: a change that breaks one is treated as a security bug. Each lists the tests that cover it. The unit tests need only Node.js 18 or later, and the browser test needs Chrome or Edge 126 or later.</p>
+					</div>
+					<div class="code">
+						<div class="code__bar"><i data-icon="terminal"></i>Terminal · in the Venora repository</div>
+<pre tabindex="0"><code class="language-bash">$ node --test tests/*.test.js
+$ node tests/browser/chromium-e2e.mjs</code></pre>
+					</div>
+					<div class="doc-links">
+						<a class="link-arrow" href="{{ doc:plugin-security.md }}" rel="noopener">Security requirements <i data-icon="arrow-up-right"></i></a>
+						<a class="link-arrow" href="{{ doc:runtime-architecture.md }}" rel="noopener">Runtime architecture <i data-icon="arrow-up-right"></i></a>
+						<a class="link-arrow" href="{{ doc:plugin-permissions.md }}" rel="noopener">Permissions <i data-icon="arrow-up-right"></i></a>
+						<a class="link-arrow" href="{{ doc:plugin-api-status.md }}" rel="noopener">Implementation status <i data-icon="arrow-up-right"></i></a>
+					</div>
+				</section>
+			</div>
+
+			<nav class="toc" aria-label="On this page">
+				<h2>On this page</h2>
+				<ul role="list">
+					<li><a href="#permissions">Permissions</a></li>
+					<li><a href="#storage">Storage isolation</a></li>
+					<li><a href="#limits">Runtime limits</a></li>
+					<li><a href="#recovery">Recovery</a></li>
+					<li><a href="#privacy">Privacy</a></li>
+					<li><a href="#limitations">Limitations</a></li>
+					<li><a href="#verify">Verify it yourself</a></li>
+				</ul>
+			</nav>
+		</div>
+	</section>
+
+</main>
+<!-- @include footer -->
+</div>
+</body>
+</html>
